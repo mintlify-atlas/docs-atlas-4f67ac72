@@ -1,0 +1,72 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "React Native Maps Routes",
+  "projectDescription": "Component for react-native-maps to draw routes between coordinates using Google Maps Routes API",
+  "theme": "palm",
+  "primaryColor": "#34A853",
+  "lightColor": "#4CAF50",
+  "darkColor": "#2E7D32",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "guides/basic-usage",
+          "guides/waypoints",
+          "guides/travel-modes",
+          "guides/route-modifiers",
+          "guides/styling",
+          "guides/callbacks"
+        ]
+      },
+      {
+        "group": "API Reference",
+        "pages": [
+          "api/mapviewroute",
+          "api/types",
+          "api/props",
+          "api/callbacks"
+        ]
+      },
+      {
+        "group": "Resources",
+        "pages": [
+          "examples",
+          "troubleshooting",
+          "migration",
+          "changelog"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Draw routes between coordinates on react-native-maps",
+    "Google Maps Routes API integration",
+    "Support for multiple travel modes (DRIVE, WALK, BICYCLE, TWO_WHEELER)",
+    "Waypoints support (up to 25 intermediate stops)",
+    "Route modifiers (avoid tolls, highways, ferries, indoor)",
+    "Estimated time and distance callbacks",
+    "Turn-by-turn navigation data via legs and steps",
+    "Customizable route styling (color, width, line cap/join)",
+    "TypeScript support with full type definitions"
+  ],
+  "publicApiSurface": [
+    "MapViewRoute",
+    "RouteModifiers",
+    "ComputeRoutesRequestBody",
+    "LegField",
+    "LegStepField",
+    "GoogleRouteLeg",
+    "GoogleRouteStep",
+    "GooglePolylineRoute",
+    "TravelMode"
+  ]
+}
