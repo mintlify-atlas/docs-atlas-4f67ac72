@@ -1,0 +1,246 @@
+---
+title: Waypoints
+description: Add intermediate stops along your route
+---
+
+Waypoints allow you to define intermediate stops that the route must pass through between the origin and destination. This is useful for multi-stop trips, delivery routes, or scenic detours.
+
+## Basic waypoints usage
+
+The `waypoints` prop accepts an array of `LatLng` objects:
+
+```tsx
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+const origin = { latitude: 37.332280, longitude: -122.010980 };
+const destination = { latitude: 37.423199, longitude: -122.084068 };
+
+// Single waypoint
+const waypoint = { latitude: 37.37, longitude: -122.04 };
+
+function MyMap() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        waypoints={[waypoint]}
+        apiKey="your-api-key-here"
+      />
+    </MapView>
+  );
+}
+```
+
+## Multiple waypoints
+
+You can add up to 25 waypoints to a single route:
+
+```tsx
+const waypoints = [
+  { latitude: 37.35, longitude: -122.02 },
+  { latitude: 37.37, longitude: -122.04 },
+  { latitude: 37.39, longitude: -122.06 },
+];
+
+function MyMap() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        waypoints={waypoints}
+        apiKey="your-api-key-here"
+      />
+    </MapView>
+  );
+}
+```
+
+<Warning>
+  Google Maps Routes API supports a maximum of 25 waypoints per request. Exceeding this limit will result in an API error.
+</Warning>
+
+## How waypoints work
+
+When you provide waypoints, the Routes API calculates a route that:
+
+1. Starts at the `origin`
+2. Passes through each waypoint in the order specified
+3. Ends at the `destination`
+
+The route is optimized to follow the most efficient path between each consecutive point, taking into account the selected travel mode and any route modifiers.
+
+```tsx
+// Route will go: San Francisco → Oakland → Berkeley → Richmond
+const origin = { latitude: 37.7749, longitude: -122.4194 }; // San Francisco
+const waypoints = [
+  { latitude: 37.8044, longitude: -122.2712 }, // Oakland
+  { latitude: 37.8715, longitude: -122.2730 }, // Berkeley
+];
+const destination = { latitude: 37.9358, longitude: -122.3477 }; // Richmond
+```
+
+## Dynamic waypoints
+
+You can update waypoints dynamically based on user interaction:
+
+```tsx
+import { useState } from 'react';
+import { Button } from 'react-native';
+import type { LatLng } from 'react-native-maps';
+
+function MyMap() {
+  const [waypoints, setWaypoints] = useState<LatLng[]>([]);
+
+  const addWaypoint = (location: LatLng) => {
+    if (waypoints.length < 25) {
+      setWaypoints([...waypoints, location]);
+    }
+  };
+
+  const removeWaypoint = (index: number) => {
+    setWaypoints(waypoints.filter((_, i) => i !== index));
+  };
+
+  return (
+    <>
+      <MapView 
+        style={{ flex: 1 }}
+        onPress={(e) => {
+          // Add waypoint on map press
+          addWaypoint(e.nativeEvent.coordinate);
+        }}
+      >
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          waypoints={waypoints}
+          apiKey="your-api-key-here"
+        />
+      </MapView>
+      
+      <Button 
+        title="Clear Waypoints" 
+        onPress={() => setWaypoints([])} 
+      />
+    </>
+  );
+}
+```
+
+## Use cases
+
+### Delivery route
+
+Plan a route with multiple delivery stops:
+
+```tsx
+const warehouse = { latitude: 37.7749, longitude: -122.4194 };
+const deliveryStops = [
+  { latitude: 37.7849, longitude: -122.4094 }, // Stop 1
+  { latitude: 37.7949, longitude: -122.3994 }, // Stop 2
+  { latitude: 37.8049, longitude: -122.3894 }, // Stop 3
+];
+const returnToWarehouse = warehouse;
+
+<MapViewRoute
+  origin={warehouse}
+  destination={returnToWarehouse}
+  waypoints={deliveryStops}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  mode="DRIVE"
+/>
+```
+
+### Scenic route
+
+Create a route that passes through points of interest:
+
+```tsx
+const start = { latitude: 36.8529, longitude: -118.2437 }; // Visalia
+const scenicPoints = [
+  { latitude: 36.4864, longitude: -118.5657 }, // Sequoia entrance
+  { latitude: 36.5647, longitude: -118.7727 }, // General Sherman Tree
+];
+const end = { latitude: 36.7378, longitude: -119.7871 }; // Fresno
+
+<MapViewRoute
+  origin={start}
+  destination={end}
+  waypoints={scenicPoints}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  mode="DRIVE"
+  strokeColor="#22c55e"
+  strokeWidth={8}
+/>
+```
+
+### Walking tour
+
+Guide users through historical landmarks:
+
+```tsx
+const tourStart = { latitude: 37.8199, longitude: -122.4783 }; // Golden Gate
+const landmarks = [
+  { latitude: 37.8080, longitude: -122.4177 }, // Coit Tower
+  { latitude: 37.7955, longitude: -122.3937 }, // Ferry Building
+  { latitude: 37.7749, longitude: -122.4194 }, // Union Square
+];
+const tourEnd = { latitude: 37.7694, longitude: -122.4862 }; // Twin Peaks
+
+<MapViewRoute
+  origin={tourStart}
+  destination={tourEnd}
+  waypoints={landmarks}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  mode="WALK"
+/>
+```
+
+## Waypoints with route legs
+
+To get detailed information about each segment of your route, use the `legFields` prop:
+
+```tsx
+import type { GoogleRouteLeg } from 'react-native-maps-routes';
+
+function MyMap() {
+  const handleLegs = (legs: GoogleRouteLeg[]) => {
+    // Each leg represents a segment: origin→waypoint1, waypoint1→waypoint2, etc.
+    legs.forEach((leg, index) => {
+      console.log(`Segment ${index + 1}:`);
+      console.log(`  Distance: ${leg.distanceMeters}m`);
+      console.log(`  Duration: ${leg.duration}`);
+    });
+  };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        waypoints={waypoints}
+        apiKey="your-api-key-here"
+        legFields={['distanceMeters', 'duration']}
+        onLegs={handleLegs}
+      />
+    </MapView>
+  );
+}
+```
+
+<Tip>
+  Learn more about route legs and detailed segment information in the [Callbacks guide](/guides/callbacks#onlegs).
+</Tip>
+
+## Important notes
+
+<Note>
+  - Waypoints are visited in the order they appear in the array
+  - The route automatically updates when waypoints change
+  - Maximum of 25 waypoints per route
+  - Waypoints use the same travel mode as the main route
+  - Route modifiers (like avoid tolls) apply to all segments
+</Note>

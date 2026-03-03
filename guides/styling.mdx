@@ -1,0 +1,439 @@
+---
+title: Styling
+description: Customize the visual appearance of your routes
+---
+
+The `MapViewRoute` component provides several props to customize the visual appearance of the route line. These props control the color, width, and line styling of the rendered polyline.
+
+## Basic styling props
+
+### strokeColor
+
+**Type:** `string`
+
+**Default:** `#000` (black)
+
+Sets the color of the route line. Accepts any valid CSS color string.
+
+```tsx
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  strokeColor="#3b82f6"
+/>
+```
+
+<Note>
+  On iOS, `strokeColor` is only supported for certain map providers. Check the react-native-maps documentation for platform-specific details.
+</Note>
+
+### strokeWidth
+
+**Type:** `number`
+
+**Default:** `6`
+
+Sets the width of the route line in pixels.
+
+```tsx
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  strokeColor="#3b82f6"
+  strokeWidth={8}
+/>
+```
+
+<Tip>
+  Use wider strokes (8-12) for primary routes and thinner strokes (3-5) for alternative or less important routes.
+</Tip>
+
+## Line styling props
+
+### lineCap
+
+**Type:** `'butt' | 'round' | 'square'`
+
+**Default:** `'round'`
+
+Controls the shape of the line ends.
+
+```tsx
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  lineCap="round"
+/>
+```
+
+<Tabs>
+  <Tab title="round">
+    ```tsx
+    <MapViewRoute lineCap="round" />
+    ```
+    Creates rounded ends. This is the default and most commonly used option.
+  </Tab>
+  <Tab title="butt">
+    ```tsx
+    <MapViewRoute lineCap="butt" />
+    ```
+    Creates flat ends that stop exactly at the endpoint.
+  </Tab>
+  <Tab title="square">
+    ```tsx
+    <MapViewRoute lineCap="square" />
+    ```
+    Creates square ends that extend slightly beyond the endpoint.
+  </Tab>
+</Tabs>
+
+<Warning>
+  `lineCap` is not yet supported for the Google Maps provider on iOS.
+</Warning>
+
+### lineJoin
+
+**Type:** `'miter' | 'round' | 'bevel'`
+
+**Default:** `'round'`
+
+Controls the shape of corners where line segments meet.
+
+```tsx
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  lineJoin="round"
+/>
+```
+
+<Tabs>
+  <Tab title="round">
+    ```tsx
+    <MapViewRoute lineJoin="round" />
+    ```
+    Creates smooth, rounded corners. This is the default and provides the smoothest appearance.
+  </Tab>
+  <Tab title="miter">
+    ```tsx
+    <MapViewRoute lineJoin="miter" />
+    ```
+    Creates sharp, pointed corners.
+  </Tab>
+  <Tab title="bevel">
+    ```tsx
+    <MapViewRoute lineJoin="bevel" />
+    ```
+    Creates flattened corners.
+  </Tab>
+</Tabs>
+
+## Color examples
+
+### Hex colors
+
+```tsx
+<MapViewRoute
+  strokeColor="#3b82f6" // Blue
+/>
+
+<MapViewRoute
+  strokeColor="#ef4444" // Red
+/>
+
+<MapViewRoute
+  strokeColor="#22c55e" // Green
+/>
+```
+
+### RGB/RGBA colors
+
+```tsx
+<MapViewRoute
+  strokeColor="rgb(59, 130, 246)" // Blue
+/>
+
+<MapViewRoute
+  strokeColor="rgba(59, 130, 246, 0.5)" // Semi-transparent blue
+/>
+```
+
+### Named colors
+
+```tsx
+<MapViewRoute strokeColor="blue" />
+<MapViewRoute strokeColor="red" />
+<MapViewRoute strokeColor="green" />
+```
+
+<Tip>
+  Use semi-transparent colors (RGBA) when displaying multiple overlapping routes to show all paths clearly.
+</Tip>
+
+## Complete styling example
+
+```tsx
+import React from 'react';
+import { StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+const origin = { latitude: 37.7749, longitude: -122.4194 };
+const destination = { latitude: 37.8049, longitude: -122.2712 };
+
+function StyledRoute() {
+  return (
+    <MapView
+      style={styles.map}
+      initialRegion={{
+        latitude: 37.79,
+        longitude: -122.34,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
+      }}
+    >
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="DRIVE"
+        strokeColor="#3b82f6"
+        strokeWidth={8}
+        lineCap="round"
+        lineJoin="round"
+      />
+    </MapView>
+  );
+}
+
+const styles = StyleSheet.create({
+  map: {
+    flex: 1,
+  },
+});
+```
+
+## Styling by travel mode
+
+Use different styles for different travel modes:
+
+```tsx
+import type { TravelMode } from 'react-native-maps-routes';
+
+type RouteStyle = {
+  color: string;
+  width: number;
+};
+
+const getModeStyle = (mode: TravelMode): RouteStyle => {
+  switch (mode) {
+    case 'WALK':
+      return { color: '#3b82f6', width: 4 }; // Blue, thin
+    case 'DRIVE':
+      return { color: '#ef4444', width: 6 }; // Red, medium
+    case 'BICYCLE':
+      return { color: '#22c55e', width: 5 }; // Green, medium-thin
+    case 'TWO_WHEELER':
+      return { color: '#f59e0b', width: 6 }; // Orange, medium
+    default:
+      return { color: '#000000', width: 6 }; // Black, medium
+  }
+};
+
+function StyledRouteByMode({ mode }: { mode: TravelMode }) {
+  const style = getModeStyle(mode);
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        mode={mode}
+        strokeColor={style.color}
+        strokeWidth={style.width}
+        lineCap="round"
+        lineJoin="round"
+      />
+    </MapView>
+  );
+}
+```
+
+## Styling multiple routes
+
+Display multiple routes with different styles:
+
+```tsx
+function MultipleRoutes() {
+  const origin = { latitude: 37.7749, longitude: -122.4194 };
+  const destination1 = { latitude: 37.8049, longitude: -122.2712 };
+  const destination2 = { latitude: 37.7849, longitude: -122.4094 };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      {/* Primary route - bold blue */}
+      <MapViewRoute
+        origin={origin}
+        destination={destination1}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        strokeColor="#3b82f6"
+        strokeWidth={8}
+      />
+
+      {/* Secondary route - thinner gray */}
+      <MapViewRoute
+        origin={origin}
+        destination={destination2}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        strokeColor="#9ca3af"
+        strokeWidth={5}
+      />
+    </MapView>
+  );
+}
+```
+
+## Styling alternatives on the same route
+
+Compare different travel modes for the same journey:
+
+```tsx
+function CompareRouteModes() {
+  const origin = { latitude: 37.7749, longitude: -122.4194 };
+  const destination = { latitude: 37.8049, longitude: -122.2712 };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      {/* Driving route - solid red */}
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        mode="DRIVE"
+        strokeColor="#ef4444"
+        strokeWidth={6}
+      />
+
+      {/* Walking route - semi-transparent blue */}
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        mode="WALK"
+        strokeColor="rgba(59, 130, 246, 0.7)"
+        strokeWidth={5}
+      />
+
+      {/* Cycling route - semi-transparent green */}
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        mode="BICYCLE"
+        strokeColor="rgba(34, 197, 94, 0.7)"
+        strokeWidth={5}
+      />
+    </MapView>
+  );
+}
+```
+
+<Note>
+  When displaying multiple overlapping routes, use semi-transparent colors (RGBA) and vary the stroke widths to make all routes visible.
+</Note>
+
+## Theme-aware styling
+
+Adapt route styling to light and dark themes:
+
+```tsx
+import { useColorScheme } from 'react-native';
+
+function ThemedRoute() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        strokeColor={isDark ? '#60a5fa' : '#3b82f6'}
+        strokeWidth={6}
+      />
+    </MapView>
+  );
+}
+```
+
+## Accessibility considerations
+
+### Color contrast
+
+Ensure sufficient contrast between the route and the map:
+
+```tsx
+// Good contrast on light maps
+<MapViewRoute strokeColor="#1e40af" strokeWidth={8} />
+
+// Good contrast on dark maps
+<MapViewRoute strokeColor="#60a5fa" strokeWidth={8} />
+```
+
+### Line width
+
+Use wider lines for better visibility:
+
+```tsx
+// Minimum recommended width for accessibility
+<MapViewRoute strokeWidth={6} />
+
+// Better for users with visual impairments
+<MapViewRoute strokeWidth={10} />
+```
+
+## Platform differences
+
+<Warning>
+  Some styling features have platform-specific behavior:
+  
+  - `strokeColor` on iOS works differently depending on the map provider
+  - `lineCap` is not supported for Google Maps on iOS
+  - Always test your styles on both iOS and Android
+</Warning>
+
+## Performance tips
+
+<Tip>
+  - Simpler styles (like `round` line joins) render faster than complex ones
+  - Avoid changing style props frequently, as this triggers re-renders
+  - Use memoization for style calculations when possible
+</Tip>
+
+```tsx
+import { useMemo } from 'react';
+
+function PerformantStyledRoute({ mode }: { mode: TravelMode }) {
+  const style = useMemo(() => getModeStyle(mode), [mode]);
+
+  return (
+    <MapViewRoute
+      origin={origin}
+      destination={destination}
+      apiKey={GOOGLE_MAPS_APIKEY}
+      mode={mode}
+      strokeColor={style.color}
+      strokeWidth={style.width}
+    />
+  );
+}
+```

@@ -1,0 +1,237 @@
+---
+title: Basic usage
+description: Learn how to render routes on a map using MapViewRoute
+---
+
+The `MapViewRoute` component renders a route between two coordinates on a map. It must be used as a child of the `MapView` component from `react-native-maps`.
+
+## Prerequisites
+
+Before using `MapViewRoute`, ensure you have:
+
+1. Installed `react-native-maps` and configured it for your platform
+2. Obtained a [Google Maps Routes API key](https://developers.google.com/maps/documentation/routes/get-api-key)
+3. Enabled the Google Maps Routes API for your key in the [Google API Console](https://console.developers.google.com/apis/)
+
+<Warning>
+  If you're using an existing Google Maps API Key, make sure you've enabled the **Google Maps Routes API** (not Directions API) for that key.
+</Warning>
+
+## Minimal example
+
+Here's the simplest way to render a route:
+
+```tsx
+import React from 'react';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+const origin = { latitude: 37.332280, longitude: -122.010980 };
+const destination = { latitude: 37.423199, longitude: -122.084068 };
+const GOOGLE_MAPS_APIKEY = 'your-api-key-here';
+
+export default function App() {
+  return (
+    <MapView
+      style={{ flex: 1 }}
+      initialRegion={{
+        latitude: 37.37,
+        longitude: -122.04,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
+      }}
+    >
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+      />
+    </MapView>
+  );
+}
+```
+
+## Required props
+
+The `MapViewRoute` component requires three props:
+
+### origin
+
+**Type:** `LatLng` (object with `latitude` and `longitude` properties)
+
+The starting point of the route.
+
+```tsx
+const origin = { 
+  latitude: 37.332280, 
+  longitude: -122.010980 
+};
+```
+
+### destination
+
+**Type:** `LatLng` (object with `latitude` and `longitude` properties)
+
+The ending point of the route.
+
+```tsx
+const destination = { 
+  latitude: 37.423199, 
+  longitude: -122.084068 
+};
+```
+
+### apiKey
+
+**Type:** `string`
+
+Your Google Maps Routes API key. This key is used to authenticate requests to the Google Maps Routes API.
+
+```tsx
+const GOOGLE_MAPS_APIKEY = 'AIza...';
+```
+
+<Tip>
+  Store your API key securely using environment variables or a secure configuration system. Never commit API keys to version control.
+</Tip>
+
+## Handling route completion
+
+Use the `onReady` callback to know when the route has been successfully calculated and rendered:
+
+```tsx
+import { useState } from 'react';
+import type { LatLng } from 'react-native-maps';
+
+function MyMap() {
+  const [routeCoordinates, setRouteCoordinates] = useState<LatLng[]>([]);
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        onReady={(coordinates) => {
+          console.log('Route is ready with', coordinates.length, 'points');
+          setRouteCoordinates(coordinates);
+        }}
+      />
+    </MapView>
+  );
+}
+```
+
+The `onReady` callback receives an array of `LatLng` objects representing all the coordinates that make up the route polyline.
+
+## Error handling
+
+Implement the `onError` callback to handle routing failures:
+
+```tsx
+function MyMap() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        onError={(error) => {
+          console.error('Route calculation failed:', error);
+          // Show an error message to the user
+          Alert.alert(
+            'Route Error',
+            'Unable to calculate route. Please try again.'
+          );
+        }}
+      />
+    </MapView>
+  );
+}
+```
+
+<Note>
+  Common errors include invalid API keys, disabled Routes API, network issues, or invalid coordinates.
+</Note>
+
+## Complete example with callbacks
+
+Here's a full example with both success and error handling:
+
+```tsx
+import React, { useState } from 'react';
+import { View, Text, Alert } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { LatLng } from 'react-native-maps';
+
+export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [pointCount, setPointCount] = useState(0);
+
+  const origin = { latitude: 37.332280, longitude: -122.010980 };
+  const destination = { latitude: 37.423199, longitude: -122.084068 };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <MapView
+        style={{ flex: 1 }}
+        initialRegion={{
+          latitude: 37.37,
+          longitude: -122.04,
+          latitudeDelta: 0.2,
+          longitudeDelta: 0.2,
+        }}
+      >
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          apiKey="your-api-key-here"
+          onReady={(coordinates) => {
+            setIsLoading(false);
+            setPointCount(coordinates.length);
+            console.log('Route ready!');
+          }}
+          onError={(error) => {
+            setIsLoading(false);
+            console.error('Route error:', error);
+            Alert.alert(
+              'Error',
+              'Failed to load route. Please check your connection.'
+            );
+          }}
+        />
+      </MapView>
+      
+      {isLoading && (
+        <View style={{ position: 'absolute', top: 50, left: 20 }}>
+          <Text>Loading route...</Text>
+        </View>
+      )}
+      
+      {!isLoading && pointCount > 0 && (
+        <View style={{ position: 'absolute', top: 50, left: 20 }}>
+          <Text>Route loaded with {pointCount} points</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Waypoints" icon="map-pin" href="/guides/waypoints">
+    Add intermediate stops to your route
+  </Card>
+  <Card title="Travel modes" icon="car" href="/guides/travel-modes">
+    Configure driving, walking, or cycling routes
+  </Card>
+  <Card title="Styling" icon="palette" href="/guides/styling">
+    Customize the appearance of your route
+  </Card>
+  <Card title="Callbacks" icon="bell" href="/guides/callbacks">
+    Access route metadata like distance and duration
+  </Card>
+</CardGroup>

@@ -1,0 +1,263 @@
+---
+title: Changelog
+description: Version history and release notes for react-native-maps-routes
+---
+
+All notable changes to `react-native-maps-routes` are documented on this page.
+
+## Latest Version: 1.5.2
+
+### [1.5.2](https://github.com/huextrat/react-native-maps-routes/compare/v1.5.1...v1.5.2) (2026-02-27)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.84.1 ([#736](https://github.com/huextrat/react-native-maps-routes/issues/736)) ([9399b6e](https://github.com/huextrat/react-native-maps-routes/commit/9399b6e2d76b515fdb8213e4e1ea38a23983e194))
+
+---
+
+## Previous Versions
+
+### [1.5.1](https://github.com/huextrat/react-native-maps-routes/compare/v1.5.0...v1.5.1) (2026-02-11)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.84.0 ([#725](https://github.com/huextrat/react-native-maps-routes/issues/725)) ([7037f67](https://github.com/huextrat/react-native-maps-routes/commit/7037f6789d107049280062feb5fe8beccad4b4ef))
+
+### [1.5.0](https://github.com/huextrat/react-native-maps-routes/compare/v1.4.0...v1.5.0) (2026-02-10)
+
+#### Features
+
+- **Route Modifiers and Request Overrides** ([#724](https://github.com/huextrat/react-native-maps-routes/issues/724)) ([9bc55e2](https://github.com/huextrat/react-native-maps-routes/commit/9bc55e2f023efab9426a9164b6442cc30a14b846))
+
+Adds support for route modifiers to customize routing behavior:
+- `routeModifiers` prop: Control route preferences like `avoidTolls`, `avoidHighways`, `avoidFerries`, and `avoidIndoor`
+- `requestBodyOverrides` prop: Override or add any field to the Routes API request body for advanced customization
+
+**Example:**
+```jsx
+import type { RouteModifiers } from 'react-native-maps-routes';
+
+const routeModifiers: RouteModifiers = {
+  avoidTolls: true,
+  avoidHighways: false,
+};
+
+<MapViewRoute
+  routeModifiers={routeModifiers}
+  requestBodyOverrides={{ languageCode: 'en', regionCode: 'us' }}
+  // ...
+/>
+```
+
+### [1.4.0](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.8...v1.4.0) (2026-02-10)
+
+#### Features
+
+- **Legs Support** ([#721](https://github.com/huextrat/react-native-maps-routes/issues/721)) ([d4b1310](https://github.com/huextrat/react-native-maps-routes/commit/d4b1310bc2eb6ef4b6c3a028792251dda4616dc9))
+
+Adds support for route legs and turn-by-turn navigation:
+- `legFields` prop: Request leg-level data like duration, distance, start/end locations
+- `legStepFields` prop: Request step-level data including navigation instructions
+- `onLegs` callback: Receive detailed route segment information
+
+**Example:**
+```jsx
+<MapViewRoute
+  legFields={['duration', 'distanceMeters']}
+  legStepFields={['navigationInstruction']}
+  onLegs={(legs) => {
+    legs.forEach(leg => {
+      leg.steps?.forEach(step => {
+        console.log(step.navigationInstruction?.instructions);
+      });
+    });
+  }}
+  // ...
+/>
+```
+
+<Note>
+Only request the fields you need to minimize API costs. The field mask is automatically generated based on your selections.
+</Note>
+
+### [1.3.8](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.7...v1.3.8) (2025-12-18)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.83.1 ([#702](https://github.com/huextrat/react-native-maps-routes/issues/702)) ([4b6c0c1](https://github.com/huextrat/react-native-maps-routes/commit/4b6c0c12ea0322cfa4b5df41343980b3b3d53fce))
+
+### [1.3.7](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.6...v1.3.7) (2025-12-15)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.83.0 ([#696](https://github.com/huextrat/react-native-maps-routes/issues/696)) ([9b2ff93](https://github.com/huextrat/react-native-maps-routes/commit/9b2ff9382f0063f73f4d485d238ffb1283e4a3da))
+
+### [1.3.6](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.5...v1.3.6) (2025-10-20)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.82.1 ([#672](https://github.com/huextrat/react-native-maps-routes/issues/672)) ([c1686e0](https://github.com/huextrat/react-native-maps-routes/commit/c1686e07ce4cae4d4cf7309ea87b7a80ba3c2e6c))
+
+### [1.3.5](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.4...v1.3.5) (2025-10-08)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.82.0 ([#663](https://github.com/huextrat/react-native-maps-routes/issues/663)) ([bae9936](https://github.com/huextrat/react-native-maps-routes/commit/bae993667a9a21d47486beda80b74426f20df282))
+
+### [1.3.4](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.3...v1.3.4) (2025-09-12)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.81.4 ([#642](https://github.com/huextrat/react-native-maps-routes/issues/642)) ([ad26843](https://github.com/huextrat/react-native-maps-routes/commit/ad2684315189240c83928227711149facad32e83))
+
+### [1.3.3](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.2...v1.3.3) (2025-08-27)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.81.1 ([#632](https://github.com/huextrat/react-native-maps-routes/issues/632)) ([340a6e3](https://github.com/huextrat/react-native-maps-routes/commit/340a6e35047fea543da49b286637059bc0795378))
+
+### [1.3.2](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.1...v1.3.2) (2025-08-12)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.81.0 ([#625](https://github.com/huextrat/react-native-maps-routes/issues/625)) ([d249e34](https://github.com/huextrat/react-native-maps-routes/commit/d249e34d1efc17aaa21bbaeef5e053e3e08c485a))
+
+### [1.3.1](https://github.com/huextrat/react-native-maps-routes/compare/v1.3.0...v1.3.1) (2025-07-24)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.80.2 ([#611](https://github.com/huextrat/react-native-maps-routes/issues/611)) ([e57e618](https://github.com/huextrat/react-native-maps-routes/commit/e57e618d797122661789918122f5153ab0ba6fe7))
+
+### [1.3.0](https://github.com/huextrat/react-native-maps-routes/compare/v1.2.2...v1.3.0) (2025-07-05)
+
+#### Features
+
+- **Waypoints Support** ([#595](https://github.com/huextrat/react-native-maps-routes/issues/595)) ([4804014](https://github.com/huextrat/react-native-maps-routes/commit/4804014b178d11232b8810cb2265e0c00fe8a5af))
+
+Adds support for intermediate waypoints between origin and destination:
+- `waypoints` prop: Array of up to 25 `LatLng` objects
+- Routes now pass through each waypoint in order
+
+**Example:**
+```jsx
+const waypoints = [
+  { latitude: 37.352280, longitude: -122.030980 },
+  { latitude: 37.382199, longitude: -122.054068 },
+];
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  waypoints={waypoints}
+  // ...
+/>
+```
+
+### [1.2.2](https://github.com/huextrat/react-native-maps-routes/compare/v1.2.1...v1.2.2) (2025-06-30)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.80.1 ([#593](https://github.com/huextrat/react-native-maps-routes/issues/593)) ([f7d2f8d](https://github.com/huextrat/react-native-maps-routes/commit/f7d2f8d33be5f82ee9fe552a4c6316e5630a7905))
+
+### [1.2.1](https://github.com/huextrat/react-native-maps-routes/compare/v1.2.0...v1.2.1) (2025-06-12)
+
+#### Bug Fixes
+
+- **deps:** update dependency react-native to v0.80.0 ([#583](https://github.com/huextrat/react-native-maps-routes/issues/583)) ([80e5d28](https://github.com/huextrat/react-native-maps-routes/commit/80e5d28b2532eae906020d223035893b42ade517))
+
+### [1.2.0](https://github.com/huextrat/react-native-maps-routes/compare/v1.1.0...v1.2.0) (2025-05-27)
+
+#### Features
+
+- **Distance Support** ([#570](https://github.com/huextrat/react-native-maps-routes/issues/570)) ([440efe0](https://github.com/huextrat/react-native-maps-routes/commit/440efe05e6b1fa64956b66eab0fef81cf04fbae2))
+
+Adds ability to fetch the total distance of the route:
+- `enableDistance` prop: Set to `true` to enable distance calculation
+- `onDistance` callback: Receives the distance in meters
+
+**Example:**
+```jsx
+<MapViewRoute
+  enableDistance
+  onDistance={(distanceInMeters) => {
+    console.log('Route distance:', distanceInMeters / 1000, 'km');
+  }}
+  // ...
+/>
+```
+
+### [1.1.0](https://github.com/huextrat/react-native-maps-routes/compare/v1.0.4...v1.1.0) (2025-05-07)
+
+#### Features
+
+- **Estimated Time Support** ([#556](https://github.com/huextrat/react-native-maps-routes/issues/556)) ([e865d94](https://github.com/huextrat/react-native-maps-routes/commit/e865d94b217374db68deb68d7878b714d1cb9b32))
+
+Adds ability to fetch estimated travel time (ETA):
+- `enableEstimatedTime` prop: Set to `true` to enable ETA calculation
+- `onEstimatedTime` callback: Receives the estimated time in milliseconds
+
+**Example:**
+```jsx
+<MapViewRoute
+  enableEstimatedTime
+  onEstimatedTime={(timeInMs) => {
+    const minutes = Math.floor(timeInMs / 60000);
+    console.log('ETA:', minutes, 'minutes');
+  }}
+  // ...
+/>
+```
+
+#### Bug Fixes
+
+- build ([519cd1c](https://github.com/huextrat/react-native-maps-routes/commit/519cd1ccd6faae8ed3ae79cc637b66023026d4c0))
+
+### [1.0.4](https://github.com/huextrat/react-native-maps-routes/compare/v1.0.3...v1.0.4) (2025-03-01)
+
+#### Bug Fixes
+
+- **dx:** align developer experience with other react-native-maps libraries ([#514](https://github.com/huextrat/react-native-maps-routes/issues/514)) ([047b89c](https://github.com/huextrat/react-native-maps-routes/commit/047b89c22147491ff24085ab45103e58cf9f35e6))
+
+### [1.0.3](https://github.com/huextrat/react-native-maps-routes/compare/v1.0.2...v1.0.3) (2023-06-09)
+
+#### Bug Fixes
+
+- **deps:** align peer dependencies ([#6](https://github.com/huextrat/react-native-maps-routes/issues/6)) ([9d73adc](https://github.com/huextrat/react-native-maps-routes/commit/9d73adc7078df23e9650997b5c57e69ead5c6ba8))
+
+### [1.0.2](https://github.com/huextrat/react-native-maps-routes/compare/v1.0.1...v1.0.2) (2023-06-09)
+
+Minor improvements and documentation updates.
+
+### [1.0.1](https://github.com/huextrat/react-native-maps-routes/compare/v1.0.0...v1.0.1) (2023-06-09)
+
+Minor improvements and documentation updates.
+
+### [1.0.0](https://github.com/huextrat/react-native-maps-routes/releases/tag/v1.0.0) (2023-06-09)
+
+#### Features
+
+- **Initial Release** ([#1](https://github.com/huextrat/react-native-maps-routes/issues/1)) ([0769288](https://github.com/huextrat/react-native-maps-routes/commit/0769288574a5ed84c3a74eab15408339cdb738a3))
+
+First stable release of `react-native-maps-routes`!
+
+**Core Features:**
+- Route rendering between origin and destination coordinates
+- Support for multiple travel modes: `DRIVE`, `WALK`, `BICYCLE`, `TWO_WHEELER`
+- Customizable route styling (stroke color, width, line cap, line join)
+- Integration with Google Maps Routes API
+- TypeScript support with full type definitions
+- Callbacks for route ready and error states
+
+---
+
+## Release Links
+
+View all releases on GitHub: [https://github.com/huextrat/react-native-maps-routes/releases](https://github.com/huextrat/react-native-maps-routes/releases)
+
+<Tip>
+Want to stay updated? Watch the [GitHub repository](https://github.com/huextrat/react-native-maps-routes) to get notified about new releases.
+</Tip>
+
+## Upgrade Guide
+
+For help upgrading between versions, see the [Migration Guide](/migration).

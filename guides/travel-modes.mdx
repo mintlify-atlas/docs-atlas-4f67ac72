@@ -1,0 +1,351 @@
+---
+title: Travel modes
+description: Configure the transportation method for route calculation
+---
+
+The `mode` prop determines how the route is calculated, affecting factors like allowed roads, speed limits, and path preferences. Different travel modes produce different routes optimized for that specific type of transportation.
+
+## Available modes
+
+The library supports four travel modes:
+
+<CardGroup cols={2}>
+  <Card title="WALK" icon="person-walking">
+    Walking routes on pedestrian paths
+  </Card>
+  <Card title="DRIVE" icon="car">
+    Driving routes for automobiles
+  </Card>
+  <Card title="BICYCLE" icon="bicycle">
+    Cycling routes on bike-friendly paths
+  </Card>
+  <Card title="TWO_WHEELER" icon="motorcycle">
+    Motorcycle and scooter routes
+  </Card>
+</CardGroup>
+
+## Default mode
+
+If you don't specify a `mode`, the component defaults to `WALK`:
+
+```tsx
+// These are equivalent
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+/>
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  mode="WALK"
+/>
+```
+
+## WALK mode
+
+Optimizes routes for pedestrians, using sidewalks and pedestrian paths.
+
+```tsx
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+const origin = { latitude: 37.7749, longitude: -122.4194 };
+const destination = { latitude: 37.7849, longitude: -122.4094 };
+
+function WalkingRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="WALK"
+      />
+    </MapView>
+  );
+}
+```
+
+### When to use WALK
+
+- Short distances (typically under 5km)
+- Urban areas with good sidewalk infrastructure
+- When you need routes through parks or pedestrian-only areas
+- For fitness tracking or walking tour applications
+
+### WALK-specific features
+
+The `avoidIndoor` route modifier only works with WALK mode:
+
+```tsx
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  mode="WALK"
+  routeModifiers={{ avoidIndoor: true }}
+/>
+```
+
+<Tip>
+  Use `avoidIndoor: true` to prefer outdoor routes, avoiding routes through buildings or indoor spaces.
+</Tip>
+
+## DRIVE mode
+
+Optimizes routes for cars and other automobiles, using roads accessible to vehicles.
+
+```tsx
+function DrivingRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="DRIVE"
+      />
+    </MapView>
+  );
+}
+```
+
+### When to use DRIVE
+
+- Long distances
+- Routes that require highways or major roads
+- Navigation and GPS applications
+- Rideshare or delivery services
+
+### DRIVE-specific features
+
+DRIVE mode supports several route modifiers:
+
+```tsx
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  mode="DRIVE"
+  routeModifiers={{
+    avoidTolls: true,
+    avoidHighways: true,
+    avoidFerries: true,
+  }}
+/>
+```
+
+<Note>
+  See the [Route modifiers guide](/guides/route-modifiers) for detailed information on customizing driving routes.
+</Note>
+
+## BICYCLE mode
+
+Optimizes routes for cycling, preferring bike lanes and bike-friendly roads.
+
+```tsx
+function CyclingRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="BICYCLE"
+      />
+    </MapView>
+  );
+}
+```
+
+### When to use BICYCLE
+
+- Medium distances (5-50km)
+- Bike sharing or cycling apps
+- Fitness and exercise tracking
+- Routes through areas with good cycling infrastructure
+
+### BICYCLE considerations
+
+- Routes prefer bike lanes and lower-traffic streets
+- Avoids highways and roads where cycling is prohibited
+- Takes elevation and terrain into account where available
+- May suggest routes that are longer but safer for cyclists
+
+## TWO_WHEELER mode
+
+Optimizes routes for motorcycles and scooters.
+
+```tsx
+function MotorcycleRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="TWO_WHEELER"
+      />
+    </MapView>
+  );
+}
+```
+
+### When to use TWO_WHEELER
+
+- Motorcycle or scooter navigation
+- Food delivery services using two-wheelers
+- Routes in areas where motorcycles have different access rules
+
+### TWO_WHEELER-specific features
+
+TWO_WHEELER mode supports the same route modifiers as DRIVE:
+
+```tsx
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  mode="TWO_WHEELER"
+  routeModifiers={{
+    avoidTolls: true,
+    avoidHighways: false,
+    avoidFerries: true,
+  }}
+/>
+```
+
+## Type-safe mode selection
+
+Import the `TravelMode` type for type safety:
+
+```tsx
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { TravelMode } from 'react-native-maps-routes';
+import { useState } from 'react';
+
+function ModeSelector() {
+  const [mode, setMode] = useState<TravelMode>('DRIVE');
+
+  return (
+    <>
+      <View>
+        <Button title="Drive" onPress={() => setMode('DRIVE')} />
+        <Button title="Walk" onPress={() => setMode('WALK')} />
+        <Button title="Cycle" onPress={() => setMode('BICYCLE')} />
+        <Button title="Motorcycle" onPress={() => setMode('TWO_WHEELER')} />
+      </View>
+      
+      <MapView style={{ flex: 1 }}>
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          mode={mode}
+        />
+      </MapView>
+    </>
+  );
+}
+```
+
+## Comparing travel modes
+
+Here's a practical example showing different routes for each mode:
+
+```tsx
+import { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { TravelMode } from 'react-native-maps-routes';
+
+const modes: TravelMode[] = ['WALK', 'DRIVE', 'BICYCLE', 'TWO_WHEELER'];
+const colors = {
+  WALK: '#3b82f6',    // blue
+  DRIVE: '#ef4444',   // red
+  BICYCLE: '#22c55e', // green
+  TWO_WHEELER: '#f59e0b', // orange
+};
+
+function CompareRoutes() {
+  const origin = { latitude: 37.7749, longitude: -122.4194 };
+  const destination = { latitude: 37.8049, longitude: -122.2712 };
+
+  return (
+    <MapView 
+      style={{ flex: 1 }}
+      initialRegion={{
+        latitude: 37.79,
+        longitude: -122.34,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
+      }}
+    >
+      {modes.map((mode) => (
+        <MapViewRoute
+          key={mode}
+          origin={origin}
+          destination={destination}
+          apiKey="your-api-key-here"
+          mode={mode}
+          strokeColor={colors[mode]}
+          strokeWidth={4}
+        />
+      ))}
+    </MapView>
+  );
+}
+```
+
+## Mode-specific styling
+
+Visually distinguish routes by mode:
+
+```tsx
+const getModeStyle = (mode: TravelMode) => {
+  switch (mode) {
+    case 'WALK':
+      return { color: '#3b82f6', width: 4 };
+    case 'DRIVE':
+      return { color: '#ef4444', width: 6 };
+    case 'BICYCLE':
+      return { color: '#22c55e', width: 5 };
+    case 'TWO_WHEELER':
+      return { color: '#f59e0b', width: 6 };
+  }
+};
+
+function StyledRoute({ mode }: { mode: TravelMode }) {
+  const style = getModeStyle(mode);
+  
+  return (
+    <MapViewRoute
+      origin={origin}
+      destination={destination}
+      apiKey={GOOGLE_MAPS_APIKEY}
+      mode={mode}
+      strokeColor={style.color}
+      strokeWidth={style.width}
+    />
+  );
+}
+```
+
+## Route modifiers by mode
+
+Not all route modifiers work with all travel modes:
+
+| Modifier | WALK | DRIVE | BICYCLE | TWO_WHEELER |
+|----------|------|-------|---------|-------------|
+| `avoidTolls` | ❌ | ✅ | ❌ | ✅ |
+| `avoidHighways` | ❌ | ✅ | ❌ | ✅ |
+| `avoidFerries` | ❌ | ✅ | ❌ | ✅ |
+| `avoidIndoor` | ✅ | ❌ | ❌ | ❌ |
+
+<Warning>
+  Using unsupported route modifiers for a travel mode may result in the modifier being ignored or an API error.
+</Warning>

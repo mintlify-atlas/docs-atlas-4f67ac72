@@ -1,0 +1,455 @@
+---
+title: 'Props'
+description: 'Complete props reference for MapViewRoute component'
+icon: 'sliders'
+---
+
+## Overview
+
+Complete reference for all props accepted by the `MapViewRoute` component. Props are organized by category for easy navigation.
+
+## Required Props
+
+These props must be provided for the component to function.
+
+<ParamField path="origin" type="LatLng" required>
+  Starting point of the route.
+  
+  Must be a `react-native-maps` LatLng object with `latitude` and `longitude` properties.
+  
+  ```typescript
+  origin={{ latitude: 37.7749, longitude: -122.4194 }}
+  ```
+</ParamField>
+
+<ParamField path="destination" type="LatLng" required>
+  Ending point of the route.
+  
+  Must be a `react-native-maps` LatLng object with `latitude` and `longitude` properties.
+  
+  ```typescript
+  destination={{ latitude: 34.0522, longitude: -118.2437 }}
+  ```
+</ParamField>
+
+<ParamField path="apiKey" type="string" required>
+  Your Google Maps API key with the Routes API enabled.
+  
+  Get your API key from the [Google Cloud Console](https://console.cloud.google.com/) and ensure the Routes API is enabled for your project.
+  
+  ```typescript
+  apiKey="AIzaSyD..."
+  ```
+</ParamField>
+
+## Routing Configuration
+
+Props that control route calculation and path finding.
+
+<ParamField path="waypoints" type="LatLng[]">
+  Array of intermediate points the route should pass through.
+  
+  The route will be calculated to pass through these waypoints in order from origin to destination.
+  
+  ```typescript
+  waypoints={[
+    { latitude: 36.7783, longitude: -119.4179 },
+    { latitude: 35.6870, longitude: -120.8089 }
+  ]}
+  ```
+  
+  **Default:** `[]`
+</ParamField>
+
+<ParamField path="mode" type="TravelMode">
+  Travel mode for route calculation.
+  
+  Available modes:
+  - `"DRIVE"` - Driving by car
+  - `"BICYCLE"` - Bicycle routing
+  - `"TWO_WHEELER"` - Motorcycle or scooter
+  - `"WALK"` - Walking/pedestrian routing
+  
+  ```typescript
+  mode="DRIVE"
+  ```
+  
+  **Default:** `"WALK"`
+  
+  See [TravelMode type](/api/types#travelmode) for more details.
+</ParamField>
+
+<ParamField path="routeModifiers" type="RouteModifiers">
+  Options to modify route calculation such as avoiding tolls, highways, or ferries.
+  
+  ```typescript
+  routeModifiers={{
+    avoidTolls: true,
+    avoidHighways: false,
+    avoidFerries: true,
+    avoidIndoor: false,
+  }}
+  ```
+  
+  Available options:
+  - `avoidTolls` - Avoid toll roads (DRIVE, TWO_WHEELER only)
+  - `avoidHighways` - Avoid highways (DRIVE, TWO_WHEELER only)
+  - `avoidFerries` - Avoid ferries (DRIVE, TWO_WHEELER only)
+  - `avoidIndoor` - Avoid indoor steps (WALK only)
+  
+  See [RouteModifiers type](/api/types#routemodifiers) for more details.
+  
+  **Reference:** [Google Routes API RouteModifiers](https://developers.google.com/maps/documentation/routes/reference/rest/v2/RouteModifiers)
+</ParamField>
+
+<ParamField path="requestBodyOverrides" type="Partial<ComputeRoutesRequestBody> & Record<string, unknown>">
+  Override or add any field to the request body sent to Google Routes API.
+  
+  Applied after built-in fields (origin, destination, travelMode, routeModifiers). Use this to access advanced API features like traffic awareness, language preferences, or polyline quality.
+  
+  ```typescript
+  requestBodyOverrides={{
+    routingPreference: "TRAFFIC_AWARE",
+    languageCode: "en-US",
+    polylineQuality: "HIGH_QUALITY",
+    units: "METRIC",
+  }}
+  ```
+  
+  **Reference:** [Google Routes API computeRoutes](https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes)
+</ParamField>
+
+## Styling Props
+
+Props that control the visual appearance of the route line.
+
+<ParamField path="strokeColor" type="string">
+  Color of the route line.
+  
+  Accepts any valid color format: hex, rgb, rgba, or named colors.
+  
+  ```typescript
+  strokeColor="#0066FF"
+  strokeColor="rgba(0, 102, 255, 0.8)"
+  strokeColor="blue"
+  ```
+  
+  **Default:** `"#000"`
+</ParamField>
+
+<ParamField path="strokeWidth" type="number">
+  Width of the route line in pixels.
+  
+  ```typescript
+  strokeWidth={4}
+  ```
+  
+  **Default:** `6`
+</ParamField>
+
+<ParamField path="lineJoin" type="LineJoinType">
+  How line segments are joined together.
+  
+  Available values:
+  - `"round"` - Rounded corners
+  - `"bevel"` - Beveled corners
+  - `"miter"` - Sharp corners
+  
+  ```typescript
+  lineJoin="round"
+  ```
+  
+  **Default:** `"round"`
+</ParamField>
+
+<ParamField path="lineCap" type="LineCapType">
+  How the ends of the line are drawn.
+  
+  Available values:
+  - `"round"` - Rounded ends
+  - `"butt"` - Flat ends
+  - `"square"` - Square ends
+  
+  ```typescript
+  lineCap="round"
+  ```
+  
+  **Default:** `"round"`
+</ParamField>
+
+## Data Options
+
+Props that control what additional data is fetched and made available through callbacks.
+
+<ParamField path="enableEstimatedTime" type="boolean">
+  Enable calculation and callback of estimated travel time.
+  
+  When `true`, the `onEstimatedTime` callback will be called with the estimated duration in milliseconds.
+  
+  ```typescript
+  enableEstimatedTime={true}
+  ```
+  
+  **Default:** `false`
+  
+  **Note:** Must be set to `true` for `onEstimatedTime` callback to fire.
+</ParamField>
+
+<ParamField path="enableDistance" type="boolean">
+  Enable calculation and callback of route distance.
+  
+  When `true`, the `onDistance` callback will be called with the total distance in meters.
+  
+  ```typescript
+  enableDistance={true}
+  ```
+  
+  **Default:** `false`
+  
+  **Note:** Must be set to `true` for `onDistance` callback to fire.
+</ParamField>
+
+<ParamField path="legFields" type="LegField[]">
+  Array of leg fields to request from the Google Routes API.
+  
+  A leg represents a segment of the route between waypoints. Specify which fields you want returned for each leg.
+  
+  Available fields:
+  - `"distanceMeters"` - Distance in meters
+  - `"duration"` - Duration with traffic
+  - `"staticDuration"` - Duration without traffic
+  - `"startLocation"` - Start coordinates
+  - `"endLocation"` - End coordinates
+  
+  ```typescript
+  legFields={[
+    "distanceMeters",
+    "duration",
+    "startLocation",
+    "endLocation"
+  ]}
+  ```
+  
+  **Note:** Required (along with `legStepFields`) for `onLegs` callback to fire.
+  
+  See [LegField type](/api/types#legfield) for more details.
+</ParamField>
+
+<ParamField path="legStepFields" type="LegStepField[]">
+  Array of leg step fields to request from the API.
+  
+  Steps provide turn-by-turn navigation instructions within each leg. Specify which fields you want returned for each step.
+  
+  Available fields:
+  - `"distanceMeters"` - Distance in meters
+  - `"staticDuration"` - Duration
+  - `"polyline"` - Encoded polyline for the step
+  - `"startLocation"` - Start coordinates
+  - `"endLocation"` - End coordinates
+  - `"navigationInstruction"` - Turn-by-turn instructions
+  
+  ```typescript
+  legStepFields={[
+    "navigationInstruction",
+    "distanceMeters",
+    "startLocation",
+    "endLocation"
+  ]}
+  ```
+  
+  **Note:** Enables detailed step data in the `onLegs` callback.
+  
+  See [LegStepField type](/api/types#legstepfield) for more details.
+</ParamField>
+
+## Callback Props
+
+Event handler functions called at various points in the route lifecycle. For detailed documentation of each callback, see the [Callbacks](/api/callbacks) page.
+
+<ParamField path="onReady" type="(coordinates: LatLng[]) => void">
+  Called when the route has been successfully fetched and is ready to render.
+  
+  Receives an array of decoded coordinates that make up the route polyline.
+  
+  See [onReady callback](/api/callbacks#onready) for details.
+</ParamField>
+
+<ParamField path="onError" type="(error: Error) => void">
+  Called when an error occurs during route fetching.
+  
+  Receives an Error object describing what went wrong.
+  
+  See [onError callback](/api/callbacks#onerror) for details.
+</ParamField>
+
+<ParamField path="onEstimatedTime" type="(time: number) => void">
+  Called with the estimated travel time in milliseconds.
+  
+  **Requires:** `enableEstimatedTime={true}`
+  
+  See [onEstimatedTime callback](/api/callbacks#onestimatedtime) for details.
+</ParamField>
+
+<ParamField path="onDistance" type="(distance: number) => void">
+  Called with the total route distance in meters.
+  
+  **Requires:** `enableDistance={true}`
+  
+  See [onDistance callback](/api/callbacks#ondistance) for details.
+</ParamField>
+
+<ParamField path="onLegs" type="(legs: GoogleRouteLeg[]) => void">
+  Called with detailed information about each route leg and step.
+  
+  **Requires:** `legFields` and/or `legStepFields` to be specified
+  
+  See [onLegs callback](/api/callbacks#onlegs) for details.
+</ParamField>
+
+## Complete Example
+
+```typescript
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { GoogleRouteLeg } from 'react-native-maps-routes';
+
+export default function RouteNavigationScreen() {
+  const [estimatedTime, setEstimatedTime] = useState<number>(0);
+  const [distance, setDistance] = useState<number>(0);
+  const [routeLegs, setRouteLegs] = useState<GoogleRouteLeg[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const origin = { latitude: 37.7749, longitude: -122.4194 };
+  const destination = { latitude: 34.0522, longitude: -118.2437 };
+  const waypoints = [
+    { latitude: 36.7783, longitude: -119.4179 },
+  ];
+
+  const formatTime = (ms: number) => {
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    return `${hours}h ${minutes}m`;
+  };
+
+  const formatDistance = (meters: number) => {
+    const km = (meters / 1000).toFixed(1);
+    return `${km} km`;
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: 36.1699,
+          longitude: -115.1398,
+          latitudeDelta: 5,
+          longitudeDelta: 5,
+        }}
+      >
+        <Marker coordinate={origin} title="Start" />
+        <Marker coordinate={destination} title="End" />
+        
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          waypoints={waypoints}
+          apiKey="YOUR_GOOGLE_MAPS_API_KEY"
+          mode="DRIVE"
+          strokeColor="#0066FF"
+          strokeWidth={4}
+          lineJoin="round"
+          lineCap="round"
+          routeModifiers={{
+            avoidTolls: true,
+            avoidHighways: false,
+          }}
+          enableEstimatedTime
+          enableDistance
+          legFields={[
+            "distanceMeters",
+            "duration",
+            "startLocation",
+            "endLocation"
+          ]}
+          legStepFields={[
+            "navigationInstruction",
+            "distanceMeters",
+          ]}
+          onReady={(coords) => {
+            console.log('Route loaded with', coords.length, 'points');
+          }}
+          onError={(err) => {
+            setError(err.message);
+            console.error('Route error:', err);
+          }}
+          onEstimatedTime={setEstimatedTime}
+          onDistance={setDistance}
+          onLegs={setRouteLegs}
+          requestBodyOverrides={{
+            routingPreference: "TRAFFIC_AWARE",
+            languageCode: "en-US",
+          }}
+        />
+      </MapView>
+      
+      <View style={styles.infoPanel}>
+        {error ? (
+          <Text style={styles.error}>Error: {error}</Text>
+        ) : (
+          <>
+            <Text style={styles.infoText}>
+              Time: {formatTime(estimatedTime)}
+            </Text>
+            <Text style={styles.infoText}>
+              Distance: {formatDistance(distance)}
+            </Text>
+            <Text style={styles.infoText}>
+              Legs: {routeLegs.length}
+            </Text>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  infoPanel: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  infoText: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  error: {
+    fontSize: 14,
+    color: 'red',
+  },
+});
+```
+
+## See Also
+
+- [MapViewRoute Component](/api/mapviewroute) - Component overview
+- [Callbacks Reference](/api/callbacks) - Detailed callback documentation
+- [Types Reference](/api/types) - TypeScript type definitions

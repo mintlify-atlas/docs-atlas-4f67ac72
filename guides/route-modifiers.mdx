@@ -1,0 +1,402 @@
+---
+title: Route modifiers
+description: Customize route calculation with preferences and constraints
+---
+
+Route modifiers allow you to customize how routes are calculated by specifying preferences like avoiding tolls, highways, or ferries. These modifiers are passed to the Google Maps Routes API to influence the path selection.
+
+## Available modifiers
+
+The `routeModifiers` prop accepts a `RouteModifiers` object with the following optional properties:
+
+```tsx
+import type { RouteModifiers } from 'react-native-maps-routes';
+
+const modifiers: RouteModifiers = {
+  avoidTolls: true,
+  avoidHighways: true,
+  avoidFerries: true,
+  avoidIndoor: true,
+};
+```
+
+## avoidTolls
+
+**Type:** `boolean`
+
+**Supported modes:** `DRIVE`, `TWO_WHEELER`
+
+Prefer routes that avoid toll roads.
+
+```tsx
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+function TollFreeRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="DRIVE"
+        routeModifiers={{ avoidTolls: true }}
+      />
+    </MapView>
+  );
+}
+```
+
+<Note>
+  The Routes API will try to avoid tolls but may still include them if no reasonable alternative exists.
+</Note>
+
+### Use cases for avoidTolls
+
+- Budget-conscious users who want to minimize trip costs
+- Fleet management to reduce operational expenses
+- Delivery services with cost optimization requirements
+
+## avoidHighways
+
+**Type:** `boolean`
+
+**Supported modes:** `DRIVE`, `TWO_WHEELER`
+
+Prefer routes that avoid highways and freeways.
+
+```tsx
+function LocalRoadsRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="DRIVE"
+        routeModifiers={{ avoidHighways: true }}
+      />
+    </MapView>
+  );
+}
+```
+
+### Use cases for avoidHighways
+
+- Scenic drives on local roads
+- New drivers who prefer slower, less intense roads
+- Recreational trips where the journey matters more than speed
+- Vehicles not permitted on highways (some trucks, agricultural vehicles)
+
+## avoidFerries
+
+**Type:** `boolean`
+
+**Supported modes:** `DRIVE`, `TWO_WHEELER`
+
+Prefer routes that avoid ferries.
+
+```tsx
+function NoFerryRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="DRIVE"
+        routeModifiers={{ avoidFerries: true }}
+      />
+    </MapView>
+  );
+}
+```
+
+### Use cases for avoidFerries
+
+- Avoiding ferry schedules and potential delays
+- Reducing transportation costs
+- Drivers uncomfortable with water crossings
+- Time-sensitive deliveries requiring predictable routes
+
+## avoidIndoor
+
+**Type:** `boolean`
+
+**Supported modes:** `WALK` only
+
+Prefer routes that avoid indoor steps, such as walking through buildings or malls.
+
+```tsx
+function OutdoorWalkingRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="WALK"
+        routeModifiers={{ avoidIndoor: true }}
+      />
+    </MapView>
+  );
+}
+```
+
+<Warning>
+  The `avoidIndoor` modifier only works with `mode="WALK"`. It will be ignored for other travel modes.
+</Warning>
+
+### Use cases for avoidIndoor
+
+- Preferring fresh air and outdoor scenery
+- Avoiding crowded indoor spaces
+- Health and accessibility concerns
+- Walking pets that aren't allowed indoors
+
+## Combining multiple modifiers
+
+You can combine multiple route modifiers:
+
+```tsx
+function ConservativeRoute() {
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="DRIVE"
+        routeModifiers={{
+          avoidTolls: true,
+          avoidHighways: true,
+          avoidFerries: true,
+        }}
+      />
+    </MapView>
+  );
+}
+```
+
+<Tip>
+  Keep in mind that applying multiple modifiers may significantly increase travel time or, in some cases, make finding a route impossible.
+</Tip>
+
+## Mode compatibility
+
+Not all route modifiers work with all travel modes:
+
+<Tabs>
+  <Tab title="DRIVE">
+    ```tsx
+    <MapViewRoute
+      mode="DRIVE"
+      routeModifiers={{
+        avoidTolls: true,     // ✅ Supported
+        avoidHighways: true,  // ✅ Supported
+        avoidFerries: true,   // ✅ Supported
+        avoidIndoor: true,    // ❌ Ignored
+      }}
+    />
+    ```
+  </Tab>
+  <Tab title="TWO_WHEELER">
+    ```tsx
+    <MapViewRoute
+      mode="TWO_WHEELER"
+      routeModifiers={{
+        avoidTolls: true,     // ✅ Supported
+        avoidHighways: true,  // ✅ Supported
+        avoidFerries: true,   // ✅ Supported
+        avoidIndoor: true,    // ❌ Ignored
+      }}
+    />
+    ```
+  </Tab>
+  <Tab title="WALK">
+    ```tsx
+    <MapViewRoute
+      mode="WALK"
+      routeModifiers={{
+        avoidTolls: true,     // ❌ Ignored
+        avoidHighways: true,  // ❌ Ignored
+        avoidFerries: true,   // ❌ Ignored
+        avoidIndoor: true,    // ✅ Supported
+      }}
+    />
+    ```
+  </Tab>
+  <Tab title="BICYCLE">
+    ```tsx
+    <MapViewRoute
+      mode="BICYCLE"
+      routeModifiers={{
+        avoidTolls: true,     // ❌ Ignored
+        avoidHighways: true,  // ❌ Ignored
+        avoidFerries: true,   // ❌ Ignored
+        avoidIndoor: true,    // ❌ Ignored
+      }}
+    />
+    ```
+  </Tab>
+</Tabs>
+
+## Dynamic route modifiers
+
+Allow users to toggle route preferences:
+
+```tsx
+import { useState } from 'react';
+import { View, Switch, Text } from 'react-native';
+import type { RouteModifiers } from 'react-native-maps-routes';
+
+function RouteWithToggles() {
+  const [avoidTolls, setAvoidTolls] = useState(false);
+  const [avoidHighways, setAvoidHighways] = useState(false);
+  const [avoidFerries, setAvoidFerries] = useState(false);
+
+  const routeModifiers: RouteModifiers = {
+    ...(avoidTolls && { avoidTolls: true }),
+    ...(avoidHighways && { avoidHighways: true }),
+    ...(avoidFerries && { avoidFerries: true }),
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ padding: 20, backgroundColor: 'white' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Text>Avoid tolls</Text>
+          <Switch value={avoidTolls} onValueChange={setAvoidTolls} />
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Text>Avoid highways</Text>
+          <Switch value={avoidHighways} onValueChange={setAvoidHighways} />
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text>Avoid ferries</Text>
+          <Switch value={avoidFerries} onValueChange={setAvoidFerries} />
+        </View>
+      </View>
+
+      <MapView style={{ flex: 1 }}>
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          apiKey="your-api-key-here"
+          mode="DRIVE"
+          routeModifiers={routeModifiers}
+        />
+      </MapView>
+    </View>
+  );
+}
+```
+
+## Advanced customization with requestBodyOverrides
+
+For advanced use cases not covered by the standard route modifiers, use `requestBodyOverrides` to pass any field from the Google Maps Routes API:
+
+```tsx
+import type { ComputeRoutesRequestBody } from 'react-native-maps-routes';
+
+function AdvancedRoute() {
+  const requestBodyOverrides: Partial<ComputeRoutesRequestBody> = {
+    routingPreference: 'TRAFFIC_AWARE',
+    languageCode: 'en-US',
+    units: 'IMPERIAL',
+  };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey="your-api-key-here"
+        mode="DRIVE"
+        requestBodyOverrides={requestBodyOverrides}
+      />
+    </MapView>
+  );
+}
+```
+
+<Note>
+  The `requestBodyOverrides` prop is applied after all built-in fields, so it can override `routeModifiers` if needed.
+</Note>
+
+### Common requestBodyOverrides examples
+
+<Tabs>
+  <Tab title="Traffic-aware routing">
+    ```tsx
+    <MapViewRoute
+      requestBodyOverrides={{
+        routingPreference: 'TRAFFIC_AWARE',
+      }}
+    />
+    ```
+    Calculate routes based on current traffic conditions.
+  </Tab>
+  <Tab title="Language preference">
+    ```tsx
+    <MapViewRoute
+      requestBodyOverrides={{
+        languageCode: 'es',
+      }}
+    />
+    ```
+    Return navigation instructions in Spanish.
+  </Tab>
+  <Tab title="Unit preference">
+    ```tsx
+    <MapViewRoute
+      requestBodyOverrides={{
+        units: 'IMPERIAL', // or 'METRIC'
+      }}
+    />
+    ```
+    Specify measurement units for distances.
+  </Tab>
+  <Tab title="Polyline quality">
+    ```tsx
+    <MapViewRoute
+      requestBodyOverrides={{
+        polylineQuality: 'HIGH_QUALITY',
+      }}
+    />
+    ```
+    Request higher-resolution polyline data for smoother route rendering.
+  </Tab>
+</Tabs>
+
+### Overriding routeModifiers
+
+You can use `requestBodyOverrides` to override the standard `routeModifiers`:
+
+```tsx
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey="your-api-key-here"
+  mode="DRIVE"
+  routeModifiers={{ avoidTolls: true }}
+  requestBodyOverrides={{
+    // This will override the avoidTolls from routeModifiers
+    routeModifiers: { avoidTolls: false, avoidHighways: true },
+  }}
+/>
+```
+
+## API reference
+
+For a complete list of available fields, see:
+
+- [RouteModifiers API reference](https://developers.google.com/maps/documentation/routes/reference/rest/v2/RouteModifiers)
+- [ComputeRoutes API reference](https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes)
+
+<Tip>
+  Use TypeScript imports for autocomplete and type checking:
+  ```tsx
+  import type { RouteModifiers, ComputeRoutesRequestBody } from 'react-native-maps-routes';
+  ```
+</Tip>

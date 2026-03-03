@@ -1,0 +1,493 @@
+---
+title: Examples
+description: Real-world examples of using react-native-maps-routes in your React Native app
+---
+
+This page provides practical examples of using `react-native-maps-routes` to display routes on maps with different configurations and use cases.
+
+## Basic Route Between Two Points
+
+The simplest example shows a walking route between two coordinates:
+
+```jsx
+import React from 'react';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+const BasicRouteExample = () => {
+  const origin = { latitude: 37.332280, longitude: -122.010980 };
+  const destination = { latitude: 37.423199, longitude: -122.084068 };
+  const GOOGLE_MAPS_APIKEY = 'YOUR_API_KEY';
+
+  return (
+    <MapView
+      style={{ flex: 1 }}
+      initialRegion={{
+        latitude: 37.3778,
+        longitude: -122.0476,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
+      }}
+    >
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        strokeColor="#0080FF"
+        strokeWidth={4}
+        onReady={(coords) => {
+          console.log('Route is ready with', coords.length, 'points');
+        }}
+        onError={(error) => {
+          console.error('Route error:', error);
+        }}
+      />
+    </MapView>
+  );
+};
+
+export default BasicRouteExample;
+```
+
+This example draws a blue route line on the map and logs when the route is ready or if an error occurs.
+
+## Route with Waypoints
+
+You can add intermediate stops (waypoints) to create a route that passes through multiple locations:
+
+```jsx
+import React from 'react';
+import MapView, { Marker } from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+const WaypointsExample = () => {
+  const origin = { latitude: 37.332280, longitude: -122.010980 };
+  const destination = { latitude: 37.423199, longitude: -122.084068 };
+  const waypoints = [
+    { latitude: 37.352280, longitude: -122.030980 },
+    { latitude: 37.382199, longitude: -122.054068 },
+  ];
+  const GOOGLE_MAPS_APIKEY = 'YOUR_API_KEY';
+
+  return (
+    <MapView
+      style={{ flex: 1 }}
+      initialRegion={{
+        latitude: 37.3778,
+        longitude: -122.0476,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
+      }}
+    >
+      <Marker coordinate={origin} title="Start" pinColor="green" />
+      {waypoints.map((waypoint, index) => (
+        <Marker
+          key={index}
+          coordinate={waypoint}
+          title={`Stop ${index + 1}`}
+          pinColor="orange"
+        />
+      ))}
+      <Marker coordinate={destination} title="End" pinColor="red" />
+
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        waypoints={waypoints}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        strokeColor="#FF6B35"
+        strokeWidth={5}
+        mode="DRIVE"
+      />
+    </MapView>
+  );
+};
+
+export default WaypointsExample;
+```
+
+<Note>
+The Google Maps Routes API supports up to 25 waypoints between the origin and destination.
+</Note>
+
+## Different Travel Modes Comparison
+
+Compare routes for different transportation modes side by side:
+
+```jsx
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { TravelMode } from 'react-native-maps-routes';
+
+const TravelModesExample = () => {
+  const origin = { latitude: 37.332280, longitude: -122.010980 };
+  const destination = { latitude: 37.423199, longitude: -122.084068 };
+  const GOOGLE_MAPS_APIKEY = 'YOUR_API_KEY';
+
+  const modes: Array<{ mode: TravelMode; color: string }> = [
+    { mode: 'DRIVE', color: '#4285F4' },
+    { mode: 'BICYCLE', color: '#34A853' },
+    { mode: 'WALK', color: '#FBBC04' },
+    { mode: 'TWO_WHEELER', color: '#EA4335' },
+  ];
+
+  return (
+    <MapView
+      style={styles.map}
+      initialRegion={{
+        latitude: 37.3778,
+        longitude: -122.0476,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
+      }}
+    >
+      {modes.map(({ mode, color }) => (
+        <MapViewRoute
+          key={mode}
+          origin={origin}
+          destination={destination}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          mode={mode}
+          strokeColor={color}
+          strokeWidth={4}
+          onReady={() => console.log(`${mode} route loaded`)}
+        />
+      ))}
+    </MapView>
+  );
+};
+
+const styles = StyleSheet.create({
+  map: {
+    flex: 1,
+  },
+});
+
+export default TravelModesExample;
+```
+
+<Tip>
+Available travel modes are: `DRIVE`, `BICYCLE`, `TWO_WHEELER`, and `WALK`. Each mode calculates routes optimized for that type of travel.
+</Tip>
+
+## Using Route Modifiers
+
+Avoid tolls, highways, ferries, or indoor routes using route modifiers:
+
+```jsx
+import React from 'react';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { RouteModifiers } from 'react-native-maps-routes';
+
+const RouteModifiersExample = () => {
+  const origin = { latitude: 37.332280, longitude: -122.010980 };
+  const destination = { latitude: 37.423199, longitude: -122.084068 };
+  const GOOGLE_MAPS_APIKEY = 'YOUR_API_KEY';
+
+  const routeModifiers: RouteModifiers = {
+    avoidTolls: true,
+    avoidHighways: true,
+    avoidFerries: false,
+    avoidIndoor: false,
+  };
+
+  return (
+    <MapView
+      style={{ flex: 1 }}
+      initialRegion={{
+        latitude: 37.3778,
+        longitude: -122.0476,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
+      }}
+    >
+      {/* Route with modifiers (avoiding tolls and highways) */}
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        mode="DRIVE"
+        routeModifiers={routeModifiers}
+        strokeColor="#00C851"
+        strokeWidth={5}
+      />
+
+      {/* Standard route for comparison */}
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        mode="DRIVE"
+        strokeColor="#FF4444"
+        strokeWidth={3}
+        lineCap="square"
+      />
+    </MapView>
+  );
+};
+
+export default RouteModifiersExample;
+```
+
+The green route avoids tolls and highways, while the red route takes the standard path. This is useful for users who want to avoid certain road types.
+
+## Accessing Estimated Time and Distance
+
+Get the route's estimated travel time and distance:
+
+```jsx
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+const TimeDistanceExample = () => {
+  const origin = { latitude: 37.332280, longitude: -122.010980 };
+  const destination = { latitude: 37.423199, longitude: -122.084068 };
+  const GOOGLE_MAPS_APIKEY = 'YOUR_API_KEY';
+
+  const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
+  const [distance, setDistance] = useState<number | null>(null);
+
+  const formatTime = (milliseconds: number) => {
+    const minutes = Math.floor(milliseconds / 60000);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${remainingMinutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const formatDistance = (meters: number) => {
+    const km = meters / 1000;
+    return `${km.toFixed(1)} km`;
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: 37.3778,
+          longitude: -122.0476,
+          latitudeDelta: 0.2,
+          longitudeDelta: 0.2,
+        }}
+      >
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          mode="DRIVE"
+          strokeColor="#6200EE"
+          strokeWidth={5}
+          enableEstimatedTime
+          onEstimatedTime={setEstimatedTime}
+          enableDistance
+          onDistance={setDistance}
+        />
+      </MapView>
+
+      <View style={styles.infoBox}>
+        <Text style={styles.infoText}>
+          {estimatedTime ? `ETA: ${formatTime(estimatedTime)}` : 'Calculating...'}
+        </Text>
+        <Text style={styles.infoText}>
+          {distance ? `Distance: ${formatDistance(distance)}` : 'Calculating...'}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  infoBox: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  infoText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginVertical: 5,
+  },
+});
+
+export default TimeDistanceExample;
+```
+
+<Note>
+You must set `enableEstimatedTime` and/or `enableDistance` to `true` to receive these values. The estimated time is returned in milliseconds, and distance in meters.
+</Note>
+
+## Turn-by-Turn Navigation with Legs
+
+Access detailed route information including turn-by-turn directions using leg data:
+
+```jsx
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { GoogleRouteLeg, LegField, LegStepField } from 'react-native-maps-routes';
+
+const NavigationExample = () => {
+  const origin = { latitude: 37.332280, longitude: -122.010980 };
+  const destination = { latitude: 37.423199, longitude: -122.084068 };
+  const GOOGLE_MAPS_APIKEY = 'YOUR_API_KEY';
+
+  const [legs, setLegs] = useState<GoogleRouteLeg[]>([]);
+
+  const legFields: LegField[] = [
+    'distanceMeters',
+    'duration',
+    'startLocation',
+    'endLocation',
+  ];
+
+  const legStepFields: LegStepField[] = [
+    'distanceMeters',
+    'staticDuration',
+    'navigationInstruction',
+    'startLocation',
+    'endLocation',
+  ];
+
+  return (
+    <View style={styles.container}>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: 37.3778,
+          longitude: -122.0476,
+          latitudeDelta: 0.2,
+          longitudeDelta: 0.2,
+        }}
+      >
+        <Marker coordinate={origin} title="Start" />
+        <Marker coordinate={destination} title="End" />
+
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          mode="DRIVE"
+          strokeColor="#1E88E5"
+          strokeWidth={5}
+          legFields={legFields}
+          legStepFields={legStepFields}
+          onLegs={setLegs}
+        />
+      </MapView>
+
+      <ScrollView style={styles.instructionsContainer}>
+        <Text style={styles.title}>Turn-by-Turn Directions</Text>
+        {legs.map((leg, legIndex) => (
+          <View key={legIndex} style={styles.legContainer}>
+            <Text style={styles.legTitle}>Leg {legIndex + 1}</Text>
+            {leg.steps?.map((step, stepIndex) => (
+              <View key={stepIndex} style={styles.stepContainer}>
+                <Text style={styles.stepNumber}>{stepIndex + 1}.</Text>
+                <View style={styles.stepContent}>
+                  <Text style={styles.instruction}>
+                    {step.navigationInstruction?.instructions || 'Continue'}
+                  </Text>
+                  {step.distanceMeters && (
+                    <Text style={styles.stepDetail}>
+                      {(step.distanceMeters / 1000).toFixed(1)} km
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  instructionsContainer: {
+    maxHeight: 300,
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  legContainer: {
+    padding: 15,
+  },
+  legTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+    color: '#1E88E5',
+  },
+  stepContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  stepNumber: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 10,
+    color: '#666',
+  },
+  stepContent: {
+    flex: 1,
+  },
+  instruction: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  stepDetail: {
+    fontSize: 12,
+    color: '#666',
+  },
+});
+
+export default NavigationExample;
+```
+
+<Tip>
+When using `legFields` or `legStepFields`, only request the fields you need to minimize API costs. The `onLegs` callback is automatically triggered when these fields are provided.
+</Tip>
+
+## Next Steps
+
+- Learn about common issues in [Troubleshooting](/troubleshooting)
+- Check the [API Reference](/api/mapviewroute) for all available props
+- Review the [Changelog](/changelog) for recent updates

@@ -1,0 +1,469 @@
+---
+title: 'Types'
+description: 'TypeScript type definitions for react-native-maps-routes'
+icon: 'brackets-curly'
+---
+
+## Overview
+
+This page documents all TypeScript types exported by the react-native-maps-routes library. These types are used for type-safe route configuration, callbacks, and API interactions.
+
+## Travel Mode
+
+### TravelMode
+
+Defines the mode of transportation for route calculation.
+
+```typescript
+type TravelMode = "DRIVE" | "BICYCLE" | "TWO_WHEELER" | "WALK";
+```
+
+**Values:**
+- `"DRIVE"` - Driving by car
+- `"BICYCLE"` - Bicycle routing
+- `"TWO_WHEELER"` - Motorcycle or scooter
+- `"WALK"` - Walking/pedestrian routing
+
+**Usage:**
+```typescript
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { TravelMode } from 'react-native-maps-routes';
+
+const mode: TravelMode = "DRIVE";
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={apiKey}
+  mode={mode}
+/>
+```
+
+## Route Modifiers
+
+### RouteModifiers
+
+Options to modify how routes are calculated by avoiding certain road types or conditions.
+
+```typescript
+type RouteModifiers = {
+  avoidTolls?: boolean;
+  avoidHighways?: boolean;
+  avoidFerries?: boolean;
+  avoidIndoor?: boolean;
+};
+```
+
+<ParamField path="avoidTolls" type="boolean">
+  Prefer routes that avoid toll roads. Applies to `DRIVE` and `TWO_WHEELER` modes only.
+</ParamField>
+
+<ParamField path="avoidHighways" type="boolean">
+  Prefer routes that avoid highways. Applies to `DRIVE` and `TWO_WHEELER` modes only.
+</ParamField>
+
+<ParamField path="avoidFerries" type="boolean">
+  Prefer routes that avoid ferries. Applies to `DRIVE` and `TWO_WHEELER` modes only.
+</ParamField>
+
+<ParamField path="avoidIndoor" type="boolean">
+  Prefer routes that avoid indoor steps. Applies to `WALK` mode only.
+</ParamField>
+
+**Reference:** [Google Routes API RouteModifiers](https://developers.google.com/maps/documentation/routes/reference/rest/v2/RouteModifiers)
+
+**Usage:**
+```typescript
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={apiKey}
+  mode="DRIVE"
+  routeModifiers={{
+    avoidTolls: true,
+    avoidHighways: false,
+    avoidFerries: true,
+  }}
+/>
+```
+
+## Request Body
+
+### ComputeRoutesRequestBody
+
+Minimal type definition for the Google Routes API computeRoutes request body. Use `requestBodyOverrides` prop to pass any additional fields supported by the API.
+
+```typescript
+type ComputeRoutesRequestBody = {
+  origin?: { location: { latLng: { latitude: number; longitude: number } } };
+  destination?: {
+    location: { latLng: { latitude: number; longitude: number } };
+  };
+  intermediates?: Array<{
+    location: { latLng: { latitude: number; longitude: number } };
+  }>;
+  travelMode?: string;
+  routeModifiers?: RouteModifiers;
+  [key: string]: unknown;
+};
+```
+
+This type allows you to override or extend the request body with any fields supported by the Google Routes API, such as `routingPreference`, `languageCode`, `polylineQuality`, etc.
+
+**Reference:** [Google Routes API computeRoutes](https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes)
+
+**Usage:**
+```typescript
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={apiKey}
+  requestBodyOverrides={{
+    routingPreference: "TRAFFIC_AWARE",
+    languageCode: "en-US",
+    polylineQuality: "HIGH_QUALITY",
+  }}
+/>
+```
+
+## Leg Fields
+
+### LegField
+
+Fields that can be requested for each route leg. A leg represents a segment of the route between waypoints.
+
+```typescript
+type LegField =
+  | "distanceMeters"
+  | "duration"
+  | "staticDuration"
+  | "startLocation"
+  | "endLocation";
+```
+
+**Fields:**
+- `"distanceMeters"` - Distance of the leg in meters
+- `"duration"` - Estimated travel time considering traffic
+- `"staticDuration"` - Travel time without traffic considerations
+- `"startLocation"` - Starting coordinates of the leg
+- `"endLocation"` - Ending coordinates of the leg
+
+**Usage:**
+```typescript
+import type { LegField, GoogleRouteLeg } from 'react-native-maps-routes';
+
+const legFields: LegField[] = [
+  "distanceMeters",
+  "duration",
+  "startLocation",
+  "endLocation"
+];
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={apiKey}
+  legFields={legFields}
+  onLegs={(legs: GoogleRouteLeg[]) => {
+    legs.forEach(leg => {
+      console.log('Leg distance:', leg.distanceMeters);
+      console.log('Leg duration:', leg.duration);
+    });
+  }}
+/>
+```
+
+### LegStepField
+
+Fields that can be requested for each step within a route leg. Steps provide turn-by-turn navigation instructions.
+
+```typescript
+type LegStepField =
+  | "distanceMeters"
+  | "staticDuration"
+  | "polyline"
+  | "startLocation"
+  | "endLocation"
+  | "navigationInstruction";
+```
+
+**Fields:**
+- `"distanceMeters"` - Distance of the step in meters
+- `"staticDuration"` - Duration of the step
+- `"polyline"` - Encoded polyline for the step
+- `"startLocation"` - Starting coordinates of the step
+- `"endLocation"` - Ending coordinates of the step
+- `"navigationInstruction"` - Turn-by-turn navigation instructions
+
+**Usage:**
+```typescript
+import type { LegStepField, GoogleRouteLeg } from 'react-native-maps-routes';
+
+const legStepFields: LegStepField[] = [
+  "distanceMeters",
+  "navigationInstruction",
+  "startLocation",
+  "endLocation"
+];
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={apiKey}
+  legFields={["distanceMeters"]}
+  legStepFields={legStepFields}
+  onLegs={(legs) => {
+    legs.forEach(leg => {
+      leg.steps?.forEach(step => {
+        console.log('Step instruction:', step.navigationInstruction?.instructions);
+      });
+    });
+  }}
+/>
+```
+
+## Response Types
+
+### GooglePolylineRoute
+
+The complete route response from Google Routes API.
+
+```typescript
+type GooglePolylineRoute = {
+  polyline: {
+    encodedPolyline: string;
+  };
+  duration?: string;
+  distanceMeters?: number;
+  legs?: GoogleRouteLeg[];
+};
+```
+
+<ResponseField name="polyline" type="object" required>
+  Container for the encoded polyline string.
+  
+  <ResponseField name="encodedPolyline" type="string" required>
+    Google-encoded polyline representing the route path.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Estimated travel duration as a string (e.g., "3600s" for 1 hour).
+</ResponseField>
+
+<ResponseField name="distanceMeters" type="number">
+  Total distance of the route in meters.
+</ResponseField>
+
+<ResponseField name="legs" type="GoogleRouteLeg[]">
+  Array of route legs (segments between waypoints). Only present when `legFields` or `legStepFields` are specified.
+</ResponseField>
+
+### GoogleRouteLeg
+
+Represents a segment of the route between two waypoints.
+
+```typescript
+type GoogleRouteLeg = {
+  distanceMeters?: number;
+  duration?: string;
+  staticDuration?: string;
+  startLocation?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  endLocation?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  steps?: GoogleRouteStep[];
+};
+```
+
+<ResponseField name="distanceMeters" type="number">
+  Distance of this leg in meters.
+</ResponseField>
+
+<ResponseField name="duration" type="string">
+  Estimated travel time for this leg considering traffic conditions (e.g., "1800s").
+</ResponseField>
+
+<ResponseField name="staticDuration" type="string">
+  Travel time for this leg without traffic considerations (e.g., "1500s").
+</ResponseField>
+
+<ResponseField name="startLocation" type="object">
+  Starting coordinates of this leg.
+  
+  <ResponseField name="latLng" type="object">
+    <ResponseField name="latitude" type="number">Latitude</ResponseField>
+    <ResponseField name="longitude" type="number">Longitude</ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="endLocation" type="object">
+  Ending coordinates of this leg.
+  
+  <ResponseField name="latLng" type="object">
+    <ResponseField name="latitude" type="number">Latitude</ResponseField>
+    <ResponseField name="longitude" type="number">Longitude</ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="steps" type="GoogleRouteStep[]">
+  Array of navigation steps within this leg. Only present when `legStepFields` are specified.
+</ResponseField>
+
+### GoogleRouteStep
+
+Represents a single step in turn-by-turn navigation.
+
+```typescript
+type GoogleRouteStep = {
+  distanceMeters?: number;
+  staticDuration?: string;
+  polyline?: {
+    encodedPolyline: string;
+  };
+  startLocation?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  endLocation?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  navigationInstruction?: {
+    maneuver?: string;
+    instructions?: string;
+  };
+};
+```
+
+<ResponseField name="distanceMeters" type="number">
+  Distance of this navigation step in meters.
+</ResponseField>
+
+<ResponseField name="staticDuration" type="string">
+  Duration of this step (e.g., "120s").
+</ResponseField>
+
+<ResponseField name="polyline" type="object">
+  Encoded polyline for this specific step.
+  
+  <ResponseField name="encodedPolyline" type="string">
+    Google-encoded polyline string.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="startLocation" type="object">
+  Starting coordinates of this step.
+  
+  <ResponseField name="latLng" type="object">
+    <ResponseField name="latitude" type="number">Latitude</ResponseField>
+    <ResponseField name="longitude" type="number">Longitude</ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="endLocation" type="object">
+  Ending coordinates of this step.
+  
+  <ResponseField name="latLng" type="object">
+    <ResponseField name="latitude" type="number">Latitude</ResponseField>
+    <ResponseField name="longitude" type="number">Longitude</ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="navigationInstruction" type="object">
+  Turn-by-turn navigation instructions for this step.
+  
+  <ResponseField name="maneuver" type="string">
+    Type of maneuver (e.g., "TURN_LEFT", "TURN_RIGHT", "STRAIGHT").
+  </ResponseField>
+  
+  <ResponseField name="instructions" type="string">
+    Human-readable navigation instruction (e.g., "Turn left onto Main St").
+  </ResponseField>
+</ResponseField>
+
+## Complete Example
+
+```typescript
+import React from 'react';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type {
+  TravelMode,
+  RouteModifiers,
+  LegField,
+  LegStepField,
+  GoogleRouteLeg,
+} from 'react-native-maps-routes';
+
+export default function NavigationScreen() {
+  const mode: TravelMode = "DRIVE";
+  
+  const modifiers: RouteModifiers = {
+    avoidTolls: true,
+    avoidHighways: false,
+  };
+  
+  const legFields: LegField[] = [
+    "distanceMeters",
+    "duration",
+    "startLocation",
+    "endLocation",
+  ];
+  
+  const legStepFields: LegStepField[] = [
+    "navigationInstruction",
+    "distanceMeters",
+    "startLocation",
+    "endLocation",
+  ];
+
+  const handleLegs = (legs: GoogleRouteLeg[]) => {
+    legs.forEach((leg, index) => {
+      console.log(`Leg ${index + 1}:`, {
+        distance: leg.distanceMeters,
+        duration: leg.duration,
+      });
+      
+      leg.steps?.forEach((step, stepIndex) => {
+        console.log(`  Step ${stepIndex + 1}:`, 
+          step.navigationInstruction?.instructions
+        );
+      });
+    });
+  };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={{ latitude: 37.7749, longitude: -122.4194 }}
+        destination={{ latitude: 34.0522, longitude: -118.2437 }}
+        apiKey="YOUR_API_KEY"
+        mode={mode}
+        routeModifiers={modifiers}
+        legFields={legFields}
+        legStepFields={legStepFields}
+        onLegs={handleLegs}
+      />
+    </MapView>
+  );
+}
+```
+
+## See Also
+
+- [MapViewRoute Component](/api/mapviewroute) - Main component reference
+- [Props Reference](/api/props) - Complete props documentation
+- [Callbacks Reference](/api/callbacks) - All callback props and their parameters

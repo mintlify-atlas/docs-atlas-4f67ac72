@@ -1,0 +1,370 @@
+---
+title: Migration Guide
+description: Migrate from react-native-maps-directions or upgrade between major versions
+---
+
+This guide helps you migrate to `react-native-maps-routes` from other libraries or upgrade between major versions.
+
+## Migrating from react-native-maps-directions
+
+If you're currently using `react-native-maps-directions`, this library provides a modern alternative using the Google Maps Routes API instead of the Directions API.
+
+### Why Migrate?
+
+The Google Maps Routes API (used by this library) offers several advantages over the Directions API:
+
+- **Better route quality**: More accurate and up-to-date routing
+- **Additional travel modes**: Support for `TWO_WHEELER` mode
+- **Enhanced route modifiers**: More granular control over route preferences
+- **Improved leg and step data**: Better navigation instructions
+- **Modern API design**: Built with newer Google Maps platform features
+
+<Note>
+The Directions API is still supported by Google, but the Routes API is their newer, recommended solution for routing.
+</Note>
+
+### Key Differences
+
+#### API Requirements
+
+**react-native-maps-directions:**
+- Uses Google Maps Directions API
+- Requires Directions API to be enabled
+
+**react-native-maps-routes:**
+- Uses Google Maps Routes API
+- Requires Routes API to be enabled (different API in Google Cloud Console)
+
+<Warning>
+You must enable the **Routes API** in your Google Cloud Console, not the Directions API. These are separate APIs.
+</Warning>
+
+#### Component Name
+
+```jsx
+// Old: react-native-maps-directions
+import MapViewDirections from 'react-native-maps-directions';
+
+<MapViewDirections
+  origin={origin}
+  destination={destination}
+  apikey={GOOGLE_MAPS_APIKEY}
+/>
+
+// New: react-native-maps-routes
+import { MapViewRoute } from 'react-native-maps-routes';
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}  // Note: 'apiKey' not 'apikey'
+/>
+```
+
+### Prop Changes
+
+<CodeGroup>
+```jsx Old (react-native-maps-directions)
+import MapViewDirections from 'react-native-maps-directions';
+
+<MapViewDirections
+  origin={origin}
+  destination={destination}
+  apikey={GOOGLE_MAPS_APIKEY}
+  strokeWidth={3}
+  strokeColor="hotpink"
+  mode="DRIVING"           // Note: DRIVING
+  optimizeWaypoints={true}
+  splitWaypoints={false}
+  directionsServiceBaseUrl="https://maps.googleapis.com/maps/api/directions/json"
+  region="us"
+  precision="high"
+  timePrecision="now"
+  channel="my-app"
+  language="en"
+  resetOnChange={false}
+  onStart={(params) => {
+    console.log('Started routing');
+  }}
+  onReady={(result) => {
+    console.log('Distance:', result.distance);
+    console.log('Duration:', result.duration);
+    console.log('Coordinates:', result.coordinates);
+  }}
+  onError={(errorMessage) => {
+    console.error(errorMessage);
+  }}
+/>
+```
+
+```jsx New (react-native-maps-routes)
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { RouteModifiers, GoogleRouteLeg } from 'react-native-maps-routes';
+
+const routeModifiers: RouteModifiers = {
+  avoidTolls: false,
+  avoidHighways: false,
+  avoidFerries: false,
+};
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}  // Capitalized 'K'
+  strokeWidth={3}
+  strokeColor="hotpink"
+  mode="DRIVE"                 // Note: DRIVE (not DRIVING)
+  waypoints={waypoints}        // No auto-optimization
+  routeModifiers={routeModifiers}
+  requestBodyOverrides={{
+    languageCode: 'en',
+    regionCode: 'us',
+  }}
+  enableEstimatedTime
+  onEstimatedTime={(time) => {
+    console.log('Duration (ms):', time);
+  }}
+  enableDistance
+  onDistance={(distance) => {
+    console.log('Distance (meters):', distance);
+  }}
+  onReady={(coordinates) => {
+    console.log('Coordinates:', coordinates);
+  }}
+  onError={(error) => {
+    console.error(error);
+  }}
+  legFields={['duration', 'distanceMeters']}
+  onLegs={(legs: GoogleRouteLeg[]) => {
+    console.log('Route legs:', legs);
+  }}
+/>
+```
+</CodeGroup>
+
+### Detailed Prop Mapping
+
+| Old Prop (Directions) | New Prop (Routes) | Notes |
+|----------------------|-------------------|-------|
+| `apikey` | `apiKey` | Capital 'K' in Routes |
+| `mode="DRIVING"` | `mode="DRIVE"` | Different enum values |
+| `mode="BICYCLING"` | `mode="BICYCLE"` | Different enum values |
+| `mode="WALKING"` | `mode="WALK"` | Different enum values |
+| `mode="TRANSIT"` | Not supported | Use `WALK` or `DRIVE` instead |
+| N/A | `mode="TWO_WHEELER"` | New mode only in Routes API |
+| `optimizeWaypoints` | Not available | Manual optimization needed |
+| `splitWaypoints` | Not available | Handle waypoint batching manually |
+| `precision` | Not needed | Routes API handles precision automatically |
+| `timePrecision` | Not needed | Use `requestBodyOverrides` for routing preferences |
+| `region` | Use `requestBodyOverrides` | `{ regionCode: 'us' }` |
+| `language` | Use `requestBodyOverrides` | `{ languageCode: 'en' }` |
+| `avoid` | `routeModifiers` | New typed object: `{ avoidTolls, avoidHighways, avoidFerries, avoidIndoor }` |
+| `onStart` | Not available | Remove this callback |
+| `onReady(result)` | Multiple callbacks | Use `onReady`, `onEstimatedTime`, `onDistance`, `onLegs` separately |
+| `resetOnChange` | Not needed | Component resets automatically |
+
+### Migration Checklist
+
+<Steps>
+  <Step title="Enable the Routes API">
+    Go to [Google Cloud Console](https://console.developers.google.com/apis/) and enable the "Routes API" for your project.
+  </Step>
+
+  <Step title="Install the new package">
+    ```bash
+    npm install react-native-maps-routes
+    # or
+    yarn add react-native-maps-routes
+    ```
+  </Step>
+
+  <Step title="Update imports">
+    ```jsx
+    // Change this:
+    import MapViewDirections from 'react-native-maps-directions';
+    
+    // To this:
+    import { MapViewRoute } from 'react-native-maps-routes';
+    ```
+  </Step>
+
+  <Step title="Update component usage">
+    - Change `apikey` to `apiKey`
+    - Update mode values: `DRIVING` → `DRIVE`, `BICYCLING` → `BICYCLE`, `WALKING` → `WALK`
+    - Replace `avoid` arrays with `routeModifiers` object
+    - Split `onReady` callback into separate `onEstimatedTime`, `onDistance`, and `onLegs` handlers
+    - Move `language` and `region` to `requestBodyOverrides`
+  </Step>
+
+  <Step title="Handle removed features">
+    - Remove `optimizeWaypoints` (implement your own optimization if needed)
+    - Remove `splitWaypoints` (handle waypoint batching manually)
+    - Remove `onStart` callback
+    - Remove `resetOnChange` prop
+    - Remove `precision` and `timePrecision` props
+  </Step>
+
+  <Step title="Test thoroughly">
+    Test all routes in your app, especially:
+    - Different travel modes
+    - Routes with waypoints
+    - Routes with modifiers (avoid tolls, highways, etc.)
+    - Error handling
+  </Step>
+</Steps>
+
+### Handling Distance and Duration
+
+The callbacks work differently:
+
+<CodeGroup>
+```jsx Old API
+<MapViewDirections
+  onReady={(result) => {
+    console.log('Distance:', result.distance);  // In km
+    console.log('Duration:', result.duration);  // In minutes
+    console.log('Fare:', result.fare);          // If available
+  }}
+/>
+```
+
+```jsx New API
+<MapViewRoute
+  enableEstimatedTime
+  onEstimatedTime={(time) => {
+    console.log('Duration:', time);  // In milliseconds
+    const minutes = time / 60000;
+  }}
+  enableDistance
+  onDistance={(distance) => {
+    console.log('Distance:', distance);  // In meters
+    const km = distance / 1000;
+  }}
+/>
+```
+</CodeGroup>
+
+<Warning>
+Note the unit changes:
+- Duration: changed from **minutes** to **milliseconds**
+- Distance: changed from **km** to **meters**
+</Warning>
+
+## Upgrading Between Major Versions
+
+### Version 1.4.0 - Legs Support
+
+**Added in 1.4.0:**
+- `legFields` prop for requesting leg-level data
+- `legStepFields` prop for turn-by-turn navigation data
+- `onLegs` callback for receiving route leg information
+
+**Breaking changes:** None
+
+This is a feature addition. Existing code continues to work without changes.
+
+```jsx
+// New feature example
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  legFields={['duration', 'distanceMeters', 'startLocation', 'endLocation']}
+  legStepFields={['navigationInstruction', 'distanceMeters']}
+  onLegs={(legs) => {
+    legs.forEach(leg => {
+      leg.steps?.forEach(step => {
+        console.log(step.navigationInstruction?.instructions);
+      });
+    });
+  }}
+/>
+```
+
+### Version 1.5.0 - Route Modifiers
+
+**Added in 1.5.0:**
+- `routeModifiers` prop for avoiding tolls, highways, ferries, or indoor routes
+- `requestBodyOverrides` prop for advanced customization
+
+**Breaking changes:** None
+
+This is a feature addition. Existing code continues to work without changes.
+
+```jsx
+import type { RouteModifiers } from 'react-native-maps-routes';
+
+const routeModifiers: RouteModifiers = {
+  avoidTolls: true,
+  avoidHighways: false,
+  avoidFerries: true,
+  avoidIndoor: false,
+};
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_APIKEY}
+  routeModifiers={routeModifiers}
+  requestBodyOverrides={{
+    routingPreference: 'TRAFFIC_AWARE',
+    languageCode: 'en',
+  }}
+/>
+```
+
+### Version 1.3.0 - Waypoints Support
+
+**Added in 1.3.0:**
+- `waypoints` prop for intermediate stops (up to 25)
+
+**Breaking changes:** None
+
+This is a feature addition.
+
+```jsx
+const waypoints = [
+  { latitude: 37.352280, longitude: -122.030980 },
+  { latitude: 37.382199, longitude: -122.054068 },
+];
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  waypoints={waypoints}
+  apiKey={GOOGLE_MAPS_APIKEY}
+/>
+```
+
+### Version 1.2.0 - Distance Support
+
+**Added in 1.2.0:**
+- `enableDistance` prop
+- `onDistance` callback
+
+**Breaking changes:** None
+
+### Version 1.1.0 - Estimated Time
+
+**Added in 1.1.0:**
+- `enableEstimatedTime` prop
+- `onEstimatedTime` callback
+
+**Breaking changes:** None
+
+### Version 1.0.0 - Initial Release
+
+First stable release with core functionality:
+- Basic routing between two points
+- Travel mode support (DRIVE, WALK, BICYCLE, TWO_WHEELER)
+- Customizable stroke styling
+- Error handling
+
+## Getting Help
+
+If you run into issues during migration:
+
+1. Check the [Examples](/examples) for working code
+2. Review the [API Reference](/api/mapviewroute) for all available props
+3. See [Troubleshooting](/troubleshooting) for common problems
+4. Open an issue on [GitHub](https://github.com/huextrat/react-native-maps-routes/issues)

@@ -1,0 +1,68 @@
+---
+title: Introduction
+description: A powerful React Native component for drawing routes on maps using Google Maps Routes API
+---
+
+# Introduction to react-native-maps-routes
+
+react-native-maps-routes is a component for the [`react-native-maps`](https://github.com/airbnb/react-native-maps/) library that lets you draw routes between coordinates on your maps. This library uses the [Google Maps Routes API](https://developers.google.com/maps/documentation/routes/) to compute optimized routes with rich features and customization options.
+
+## Key features
+
+react-native-maps-routes provides a comprehensive set of features for route rendering:
+
+- **Draw routes between coordinates**: Easily render routes from origin to destination with a simple component API
+- **Google Maps Routes API integration**: Leverages the modern Routes API for accurate and optimized route calculations
+- **Multiple travel modes**: Support for `DRIVE`, `BICYCLE`, `TWO_WHEELER`, and `WALK` travel modes
+- **Waypoints support**: Add up to 25 intermediate waypoints between origin and destination
+- **Route modifiers**: Avoid tolls, highways, ferries, or indoor steps based on your preferences
+- **Estimated time and distance**: Fetch travel time (ETA) and distance for your routes
+- **Detailed leg information**: Access step-by-step navigation instructions and leg-level route details
+- **Full customization**: Control stroke color, width, line caps, and line joins
+- **Request body overrides**: Override or extend any field in the Routes API request for advanced use cases
+
+## Routes API vs Directions API
+
+If you're familiar with [`react-native-maps-directions`](https://github.com/bramus/react-native-maps-directions/), you might wonder about the difference. The key distinction is the underlying Google API:
+
+- **react-native-maps-routes** uses the [Google Maps Routes API](https://developers.google.com/maps/documentation/routes/) (newer, more feature-rich)
+- **react-native-maps-directions** uses the [Google Maps Directions API](https://developers.google.com/maps/documentation/directions/) (older API)
+
+The Routes API offers enhanced routing algorithms, better route quality, and more granular control over route computation. If you still want to use the Directions API, continue using react-native-maps-directions.
+
+## Use cases
+
+react-native-maps-routes is perfect for:
+
+- **Ride-sharing apps**: Display driver routes to passenger pickup locations
+- **Delivery apps**: Show delivery routes with multiple waypoints for package dropoffs
+- **Navigation apps**: Render turn-by-turn navigation routes with step-by-step instructions
+- **Fitness apps**: Track walking, cycling, or running routes with distance and time estimates
+- **Travel apps**: Display tourist routes between points of interest
+- **Fleet management**: Show vehicle routes with toll and highway avoidance options
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install the library and configure your Google Maps API key
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Build your first route in minutes with a step-by-step guide
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/mapviewroute">
+    Explore all props, types, and callbacks available
+  </Card>
+  <Card title="Examples" icon="map" href="/examples">
+    See real-world examples with different configurations
+  </Card>
+</CardGroup>
+
+## Community and support
+
+react-native-maps-routes is an open-source project maintained by [Hugo EXTRAT](https://github.com/huextrat). The library is actively maintained and welcomes contributions.
+
+- **GitHub**: [huextrat/react-native-maps-routes](https://github.com/huextrat/react-native-maps-routes)
+- **npm**: [react-native-maps-routes](https://www.npmjs.com/package/react-native-maps-routes)
+- **Issues**: [Report bugs or request features](https://github.com/huextrat/react-native-maps-routes/issues)
+- **License**: MIT

@@ -1,0 +1,151 @@
+---
+title: Installation
+description: Install react-native-maps-routes and configure your Google Maps Routes API key
+---
+
+# Installation
+
+This guide walks you through installing react-native-maps-routes and setting up the required Google Maps Routes API key.
+
+## Install the package
+
+Install react-native-maps-routes using your preferred package manager:
+
+<CodeGroup>
+```bash npm
+npm install react-native-maps-routes
+```
+
+```bash yarn
+yarn add react-native-maps-routes
+```
+
+```bash pnpm
+pnpm add react-native-maps-routes
+```
+</CodeGroup>
+
+## Peer dependencies
+
+react-native-maps-routes requires the following peer dependencies. Make sure they are installed in your project:
+
+- **react**: Any version (`*`)
+- **react-native**: `>=0.64.3`
+- **react-native-maps**: `>=1.0.0`
+
+If you haven't installed react-native-maps yet, you'll need to add it:
+
+<CodeGroup>
+```bash npm
+npm install react-native-maps
+```
+
+```bash yarn
+yarn add react-native-maps
+```
+
+```bash pnpm
+pnpm add react-native-maps
+```
+</CodeGroup>
+
+<Note>
+react-native-maps requires additional native configuration. Follow the [react-native-maps installation guide](https://github.com/react-native-maps/react-native-maps/blob/master/docs/installation.md) to complete the setup.
+</Note>
+
+## Google Maps Routes API key setup
+
+react-native-maps-routes uses the Google Maps Routes API to compute routes. You'll need a valid API key with the Routes API enabled.
+
+### Step 1: Create or use an existing API key
+
+If you don't have a Google Maps API key:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services** → **Credentials**
+4. Click **Create Credentials** → **API Key**
+5. Copy your new API key
+
+<Tip>
+For production apps, restrict your API key to specific platforms (iOS/Android) and limit it to only the APIs you need.
+</Tip>
+
+### Step 2: Enable the Routes API
+
+If you're using an existing Google Maps API key, you must enable the Routes API:
+
+1. Go to the [Google API Console](https://console.developers.google.com/apis/)
+2. Select your project
+3. Click **Enable APIs and Services**
+4. Search for "Routes API"
+5. Click **Enable**
+
+<Warning>
+The Routes API is different from the Directions API. Make sure you enable the **Routes API** specifically.
+</Warning>
+
+### Step 3: Review API pricing
+
+The Google Maps Routes API is a paid service with usage-based pricing. Review the [Routes API pricing](https://developers.google.com/maps/documentation/routes/usage-and-billing) to understand costs.
+
+Key points:
+- You can optimize costs by requesting only the fields you need using `legFields` and `legStepFields`
+- The library automatically generates minimal field masks to reduce API costs
+- Consider implementing caching strategies for frequently requested routes
+
+## Environment variables
+
+For security, store your API key in environment variables instead of hardcoding it:
+
+```bash .env
+GOOGLE_MAPS_API_KEY=your_api_key_here
+```
+
+Then access it in your code:
+
+```javascript
+import { GOOGLE_MAPS_API_KEY } from '@env';
+
+<MapViewRoute
+  origin={origin}
+  destination={destination}
+  apiKey={GOOGLE_MAPS_API_KEY}
+/>
+```
+
+<Note>
+You'll need to configure your React Native project to read environment variables. Popular options include [react-native-config](https://github.com/luggit/react-native-config) or [react-native-dotenv](https://github.com/goatandsheep/react-native-dotenv).
+</Note>
+
+## Verify installation
+
+To verify your installation is complete:
+
+1. All peer dependencies are installed
+2. react-native-maps is configured for your platform (iOS/Android)
+3. You have a valid Google Maps Routes API key
+4. The Routes API is enabled in your Google Cloud project
+
+Once everything is set up, proceed to the [Quickstart](/quickstart) guide to render your first route.
+
+## TypeScript support
+
+react-native-maps-routes is written in TypeScript and includes full type definitions. No additional `@types` packages are needed.
+
+The library exports the following types:
+
+```typescript
+import type {
+  RouteModifiers,
+  ComputeRoutesRequestBody,
+  LegField,
+  LegStepField,
+  GoogleRouteLeg,
+  GoogleRouteStep,
+  GooglePolylineRoute,
+  TravelMode
+} from 'react-native-maps-routes';
+```
+
+See the [API Reference](/api/types) for detailed type information.

@@ -1,0 +1,422 @@
+---
+title: Troubleshooting
+description: Common issues and solutions when using react-native-maps-routes
+---
+
+This guide covers common problems you might encounter when using `react-native-maps-routes` and how to solve them.
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="API Key Not Working">
+    If your Google Maps API key isn't working, check the following:
+
+    **1. Ensure the Routes API is enabled**
+    
+    The Google Maps Routes API is different from the Directions API. You must enable it in the Google Cloud Console:
+    
+    - Go to [Google API Console](https://console.developers.google.com/apis/)
+    - Search for "Routes API"
+    - Click "Enable"
+
+    **2. Check API key restrictions**
+    
+    If you've set up API key restrictions, make sure they don't block the Routes API:
+    
+    - In Google Cloud Console, go to "Credentials"
+    - Edit your API key
+    - Under "API restrictions", ensure "Routes API" is in the allowed list
+    
+    **3. Verify billing is enabled**
+    
+    The Routes API requires a billing account to be linked to your Google Cloud project, even if you're within the free tier.
+
+    **4. Check for quota limits**
+    
+    You might have exceeded your daily quota. Check the "Quotas" section in Google Cloud Console.
+
+    **Error example:**
+    ```json
+    {
+      "error": {
+        "code": 403,
+        "message": "The request is missing a valid API key."
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Routes Not Displaying on Map">
+    If the route isn't appearing on your map, try these solutions:
+
+    **1. Check the onError callback**
+    
+    Add an error handler to see what's going wrong:
+    
+    ```jsx
+    <MapViewRoute
+      origin={origin}
+      destination={destination}
+      apiKey={GOOGLE_MAPS_APIKEY}
+      onError={(error) => {
+        console.error('Route error:', error);
+      }}
+    />
+    ```
+
+    **2. Verify coordinates are valid**
+    
+    Ensure your origin and destination have valid `latitude` and `longitude` properties:
+    
+    ```jsx
+    const origin = { 
+      latitude: 37.332280,  // Must be between -90 and 90
+      longitude: -122.010980 // Must be between -180 and 180
+    };
+    ```
+
+    **3. Check MapView region**
+    
+    Make sure your MapView's region includes both the origin and destination:
+    
+    ```jsx
+    <MapView
+      initialRegion={{
+        latitude: (origin.latitude + destination.latitude) / 2,
+        longitude: (origin.longitude + destination.longitude) / 2,
+        latitudeDelta: Math.abs(origin.latitude - destination.latitude) * 2,
+        longitudeDelta: Math.abs(origin.longitude - destination.longitude) * 2,
+      }}
+    >
+    ```
+
+    **4. Verify strokeColor is visible**
+    
+    If your map has a dark theme, a black stroke color might not be visible. Try a bright color:
+    
+    ```jsx
+    strokeColor="#FF0000"  // Bright red
+    strokeWidth={6}        // Increase width
+    ```
+  </Accordion>
+
+  <Accordion title='"ZERO_RESULTS" or API Errors'>
+    The `ZERO_RESULTS` status means the API couldn't find a route between your locations.
+
+    **Common causes:**
+
+    **1. Locations are too far apart**
+    
+    The Routes API might not find routes between very distant locations, especially for walking or cycling.
+
+    **2. Invalid travel mode for route**
+    
+    Some routes might not support certain travel modes:
+    
+    ```jsx
+    // Might not work for pedestrian-only areas
+    mode="DRIVE"
+    
+    // Try a different mode
+    mode="WALK"
+    ```
+
+    **3. Coordinates are in inaccessible locations**
+    
+    If your coordinates are in the middle of an ocean or unmapped area, no route will be found.
+
+    **4. Route modifiers too restrictive**
+    
+    If you're avoiding too many things, no valid route might exist:
+    
+    ```jsx
+    routeModifiers={{
+      avoidTolls: true,
+      avoidHighways: true,
+      avoidFerries: true, // Try removing some restrictions
+    }}
+    ```
+
+    **Error example:**
+    ```json
+    {
+      "error": {
+        "code": 400,
+        "message": "ZERO_RESULTS"
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Rate Limiting Issues">
+    If you're making too many requests, you might hit rate limits.
+
+    **Symptoms:**
+    - Error code 429
+    - "Quota exceeded" messages
+    - Routes stop loading after several successful requests
+
+    **Solutions:**
+
+    **1. Implement request debouncing**
+    
+    Don't fetch a new route on every coordinate change:
+    
+    ```jsx
+    import { useEffect, useRef } from 'react';
+    
+    const DebounceExample = ({ origin, destination }) => {
+      const timeoutRef = useRef<NodeJS.Timeout>();
+      const [debouncedOrigin, setDebouncedOrigin] = useState(origin);
+    
+      useEffect(() => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+    
+        timeoutRef.current = setTimeout(() => {
+          setDebouncedOrigin(origin);
+        }, 500); // Wait 500ms after last change
+    
+        return () => {
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+        };
+      }, [origin]);
+    
+      return (
+        <MapViewRoute
+          origin={debouncedOrigin}
+          destination={destination}
+          apiKey={GOOGLE_MAPS_APIKEY}
+        />
+      );
+    };
+    ```
+
+    **2. Cache route results**
+    
+    Store previously fetched routes to avoid redundant requests:
+    
+    ```jsx
+    const [cachedRoutes, setCachedRoutes] = useState({});
+    
+    const getCacheKey = (origin, destination) => 
+      `${origin.latitude},${origin.longitude}-${destination.latitude},${destination.longitude}`;
+    
+    <MapViewRoute
+      origin={origin}
+      destination={destination}
+      apiKey={GOOGLE_MAPS_APIKEY}
+      onReady={(coords) => {
+        const key = getCacheKey(origin, destination);
+        setCachedRoutes(prev => ({ ...prev, [key]: coords }));
+      }}
+    />
+    ```
+
+    **3. Increase quota limits**
+    
+    In Google Cloud Console, you can request higher quota limits for production applications.
+  </Accordion>
+
+  <Accordion title="Invalid Coordinates Error">
+    The API returns an error if coordinates are malformed or out of range.
+
+    **Valid coordinate ranges:**
+    - Latitude: -90 to 90
+    - Longitude: -180 to 180
+
+    **Common mistakes:**
+
+    **1. Swapped latitude and longitude**
+    
+    ```jsx
+    // ❌ WRONG - longitude comes first
+    const origin = { latitude: -122.010980, longitude: 37.332280 };
+    
+    // ✅ CORRECT
+    const origin = { latitude: 37.332280, longitude: -122.010980 };
+    ```
+
+    **2. Using string values instead of numbers**
+    
+    ```jsx
+    // ❌ WRONG - coordinates must be numbers
+    const origin = { latitude: "37.332280", longitude: "-122.010980" };
+    
+    // ✅ CORRECT
+    const origin = { latitude: 37.332280, longitude: -122.010980 };
+    ```
+
+    **3. Using null or undefined values**
+    
+    ```jsx
+    // Always validate coordinates before rendering
+    {origin && destination && (
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+      />
+    )}
+    ```
+
+    **Error example:**
+    ```json
+    {
+      "error": {
+        "code": 400,
+        "message": "Invalid value at 'origin.location.lat_lng.latitude'"
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Waypoints Limit Exceeded">
+    The Google Maps Routes API supports a maximum of 25 waypoints between origin and destination.
+
+    **Error example:**
+    ```json
+    {
+      "error": {
+        "code": 400,
+        "message": "Too many waypoints. Maximum is 25."
+      }
+    }
+    ```
+
+    **Solution:**
+    
+    Limit your waypoints array to 25 items:
+    
+    ```jsx
+    const MAX_WAYPOINTS = 25;
+    
+    const limitedWaypoints = waypoints.slice(0, MAX_WAYPOINTS);
+    
+    <MapViewRoute
+      origin={origin}
+      destination={destination}
+      waypoints={limitedWaypoints}
+      apiKey={GOOGLE_MAPS_APIKEY}
+    />
+    ```
+
+    If you need more than 25 waypoints, consider:
+    - Breaking the route into multiple segments
+    - Selecting only the most important waypoints
+    - Using a route optimization algorithm to reduce waypoints
+  </Accordion>
+
+  <Accordion title="Platform-Specific Issues">
+    Some props behave differently on iOS and Android.
+
+    **iOS-specific issues:**
+
+    **1. lineCap not supported on iOS with Google Maps**
+    
+    The `lineCap` prop doesn't work on iOS when using the GoogleMaps provider:
+    
+    ```jsx
+    // This prop is ignored on iOS with Google Maps
+    lineCap="square"
+    ```
+
+    **2. strokeColor behaves differently**
+    
+    On iOS, you might need to use different color formats:
+    
+    ```jsx
+    // Use hex colors for best compatibility
+    strokeColor="#FF0000"  // ✅ Works on both platforms
+    strokeColor="red"      // ❌ Might not work consistently
+    ```
+
+    **Android-specific issues:**
+
+    **1. Performance with many waypoints**
+    
+    Android might struggle with routes that have many waypoints or complex polylines. Consider:
+    - Reducing the number of waypoints
+    - Simplifying the route
+    - Using a lower `strokeWidth`
+
+    **2. Map rendering delays**
+    
+    Routes might appear with a slight delay on Android. Use the `onReady` callback to know when rendering is complete:
+    
+    ```jsx
+    const [routeReady, setRouteReady] = useState(false);
+    
+    <MapViewRoute
+      origin={origin}
+      destination={destination}
+      apiKey={GOOGLE_MAPS_APIKEY}
+      onReady={() => setRouteReady(true)}
+    />
+    ```
+  </Accordion>
+
+  <Accordion title="TypeScript Type Errors">
+    If you're using TypeScript, you might encounter type-related issues.
+
+    **Common issues:**
+
+    **1. Import types correctly**
+    
+    ```tsx
+    import { MapViewRoute } from 'react-native-maps-routes';
+    import type { 
+      RouteModifiers, 
+      LegField, 
+      LegStepField,
+      GoogleRouteLeg,
+      TravelMode,
+    } from 'react-native-maps-routes';
+    ```
+
+    **2. LatLng type comes from react-native-maps**
+    
+    ```tsx
+    import type { LatLng } from 'react-native-maps';
+    
+    const origin: LatLng = { latitude: 37.332280, longitude: -122.010980 };
+    ```
+
+    **3. Typing callbacks correctly**
+    
+    ```tsx
+    import type { GoogleRouteLeg } from 'react-native-maps-routes';
+    
+    const handleLegs = (legs: GoogleRouteLeg[]) => {
+      console.log('Received legs:', legs);
+    };
+    
+    <MapViewRoute
+      onLegs={handleLegs}
+      legFields={['duration', 'distanceMeters']}
+      // ...
+    />
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Still Having Issues?
+
+If you're still experiencing problems:
+
+1. Check the [GitHub Issues](https://github.com/huextrat/react-native-maps-routes/issues) to see if others have encountered the same problem
+2. Review the [API Reference](/api/mapviewroute) to ensure you're using props correctly
+3. Look at the [Examples](/examples) for working code snippets
+4. Open a new issue on GitHub with:
+   - Your `react-native-maps-routes` version
+   - React Native version
+   - Platform (iOS/Android)
+   - Complete error message
+   - Minimal reproducible code example
+
+<Warning>
+Always make sure you're using the latest version of `react-native-maps-routes`. Many issues are resolved in newer versions.
+</Warning>

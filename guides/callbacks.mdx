@@ -1,0 +1,579 @@
+---
+title: Callbacks
+description: Access route data and handle events with callback props
+---
+
+The `MapViewRoute` component provides several callback props that give you access to route data, including coordinates, distance, estimated time, and detailed leg information. These callbacks are triggered when the route calculation completes successfully.
+
+## onReady
+
+**Type:** `(coordinates: LatLng[]) => void`
+
+**Triggers:** When the route has been successfully calculated
+
+Receives an array of coordinate points that make up the route polyline.
+
+```tsx
+import type { LatLng } from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+function MyMap() {
+  const handleReady = (coordinates: LatLng[]) => {
+    console.log('Route ready with', coordinates.length, 'points');
+    console.log('First point:', coordinates[0]);
+    console.log('Last point:', coordinates[coordinates.length - 1]);
+  };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        onReady={handleReady}
+      />
+    </MapView>
+  );
+}
+```
+
+### Use cases for onReady
+
+- Adjusting the map camera to fit the entire route
+- Displaying the total number of points in the route
+- Storing route coordinates for offline use
+- Triggering animations or UI updates when the route loads
+
+### Fitting the map to the route
+
+```tsx
+import { useRef } from 'react';
+import MapView from 'react-native-maps';
+import type { LatLng } from 'react-native-maps';
+
+function FitToRoute() {
+  const mapRef = useRef<MapView>(null);
+
+  const handleReady = (coordinates: LatLng[]) => {
+    // Fit the map to show the entire route
+    mapRef.current?.fitToCoordinates(coordinates, {
+      edgePadding: {
+        top: 50,
+        right: 50,
+        bottom: 50,
+        left: 50,
+      },
+      animated: true,
+    });
+  };
+
+  return (
+    <MapView ref={mapRef} style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        onReady={handleReady}
+      />
+    </MapView>
+  );
+}
+```
+
+## onError
+
+**Type:** `(error: Error) => void`
+
+**Triggers:** When route calculation fails
+
+Receives an error object describing what went wrong.
+
+```tsx
+function MyMap() {
+  const handleError = (error: Error) => {
+    console.error('Route calculation failed:', error);
+    Alert.alert(
+      'Route Error',
+      'Unable to calculate route. Please try again.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        onError={handleError}
+      />
+    </MapView>
+  );
+}
+```
+
+### Common error scenarios
+
+- Invalid or missing API key
+- Routes API not enabled for the API key
+- Network connectivity issues
+- Invalid coordinates (e.g., coordinates in the ocean)
+- No route available between origin and destination
+- API quota exceeded
+
+## onEstimatedTime
+
+**Type:** `(time: number) => void`
+
+**Triggers:** When `enableEstimatedTime` is `true` and route calculation succeeds
+
+**Value:** Estimated travel time in milliseconds
+
+Receives the estimated time to travel the route.
+
+```tsx
+import { useState } from 'react';
+
+function RouteWithETA() {
+  const [eta, setEta] = useState<number | null>(null);
+
+  const handleEstimatedTime = (timeInMs: number) => {
+    setEta(timeInMs);
+    const minutes = Math.round(timeInMs / 1000 / 60);
+    console.log(`Estimated time: ${minutes} minutes`);
+  };
+
+  return (
+    <>
+      <MapView style={{ flex: 1 }}>
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          enableEstimatedTime={true}
+          onEstimatedTime={handleEstimatedTime}
+        />
+      </MapView>
+      
+      {eta && (
+        <View style={{ position: 'absolute', top: 50, left: 20, backgroundColor: 'white', padding: 10 }}>
+          <Text>ETA: {Math.round(eta / 1000 / 60)} min</Text>
+        </View>
+      )}
+    </>
+  );
+}
+```
+
+<Note>
+  You must set `enableEstimatedTime={true}` for the `onEstimatedTime` callback to be triggered.
+</Note>
+
+### Formatting estimated time
+
+```tsx
+const formatTime = (milliseconds: number): string => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes} min`;
+};
+
+function FormattedETA() {
+  const [displayTime, setDisplayTime] = useState('');
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        enableEstimatedTime={true}
+        onEstimatedTime={(ms) => setDisplayTime(formatTime(ms))}
+      />
+    </MapView>
+  );
+}
+```
+
+## onDistance
+
+**Type:** `(distance: number) => void`
+
+**Triggers:** When `enableDistance` is `true` and route calculation succeeds
+
+**Value:** Route distance in meters
+
+Receives the total distance of the route.
+
+```tsx
+import { useState } from 'react';
+
+function RouteWithDistance() {
+  const [distance, setDistance] = useState<number | null>(null);
+
+  const handleDistance = (distanceInMeters: number) => {
+    setDistance(distanceInMeters);
+    const km = (distanceInMeters / 1000).toFixed(1);
+    console.log(`Distance: ${km} km`);
+  };
+
+  return (
+    <>
+      <MapView style={{ flex: 1 }}>
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          enableDistance={true}
+          onDistance={handleDistance}
+        />
+      </MapView>
+      
+      {distance && (
+        <View style={{ position: 'absolute', top: 50, left: 20, backgroundColor: 'white', padding: 10 }}>
+          <Text>Distance: {(distance / 1000).toFixed(1)} km</Text>
+        </View>
+      )}
+    </>
+  );
+}
+```
+
+<Note>
+  You must set `enableDistance={true}` for the `onDistance` callback to be triggered.
+</Note>
+
+### Formatting distance
+
+```tsx
+const formatDistance = (meters: number, imperial = false): string => {
+  if (imperial) {
+    const miles = meters / 1609.34;
+    if (miles < 0.1) {
+      const feet = meters * 3.28084;
+      return `${Math.round(feet)} ft`;
+    }
+    return `${miles.toFixed(1)} mi`;
+  }
+  
+  if (meters < 1000) {
+    return `${Math.round(meters)} m`;
+  }
+  return `${(meters / 1000).toFixed(1)} km`;
+};
+
+function FormattedDistance() {
+  const [displayDistance, setDisplayDistance] = useState('');
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        enableDistance={true}
+        onDistance={(m) => setDisplayDistance(formatDistance(m))}
+      />
+    </MapView>
+  );
+}
+```
+
+## onLegs
+
+**Type:** `(legs: GoogleRouteLeg[]) => void`
+
+**Triggers:** When `legFields` or `legStepFields` is provided and route calculation succeeds
+
+Receives detailed information about each segment (leg) of the route. This is particularly useful when using waypoints, as each leg represents the route between consecutive waypoints.
+
+```tsx
+import type { GoogleRouteLeg } from 'react-native-maps-routes';
+
+function RouteWithLegs() {
+  const handleLegs = (legs: GoogleRouteLeg[]) => {
+    console.log(`Route has ${legs.length} legs`);
+    
+    legs.forEach((leg, index) => {
+      console.log(`Leg ${index + 1}:`);
+      console.log(`  Distance: ${leg.distanceMeters}m`);
+      console.log(`  Duration: ${leg.duration}`);
+    });
+  };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={origin}
+        destination={destination}
+        waypoints={waypoints}
+        apiKey={GOOGLE_MAPS_APIKEY}
+        legFields={['distanceMeters', 'duration']}
+        onLegs={handleLegs}
+      />
+    </MapView>
+  );
+}
+```
+
+<Note>
+  You must provide either `legFields` or `legStepFields` for the `onLegs` callback to be triggered.
+</Note>
+
+### Available leg fields
+
+The `legFields` prop accepts an array of field names:
+
+```tsx
+import type { LegField } from 'react-native-maps-routes';
+
+const legFields: LegField[] = [
+  'distanceMeters',  // Distance of the leg in meters
+  'duration',        // Time to travel (accounts for traffic)
+  'staticDuration',  // Time without traffic
+  'startLocation',   // Starting coordinates
+  'endLocation',     // Ending coordinates
+];
+
+<MapViewRoute
+  legFields={legFields}
+  onLegs={handleLegs}
+/>
+```
+
+### Available step fields
+
+The `legStepFields` prop provides even more detailed information about each turn-by-turn step:
+
+```tsx
+import type { LegStepField } from 'react-native-maps-routes';
+
+const legStepFields: LegStepField[] = [
+  'distanceMeters',        // Distance of this step
+  'staticDuration',        // Time for this step
+  'polyline',              // Encoded polyline for this step
+  'startLocation',         // Where this step starts
+  'endLocation',           // Where this step ends
+  'navigationInstruction', // Turn-by-turn instruction
+];
+
+<MapViewRoute
+  legStepFields={legStepFields}
+  onLegs={handleLegs}
+/>
+```
+
+### Processing leg data
+
+```tsx
+import type { GoogleRouteLeg } from 'react-native-maps-routes';
+
+function DetailedRouteInfo() {
+  const [routeInfo, setRouteInfo] = useState<{
+    totalDistance: number;
+    totalTime: number;
+    legs: Array<{ distance: number; time: string }>;
+  } | null>(null);
+
+  const handleLegs = (legs: GoogleRouteLeg[]) => {
+    const totalDistance = legs.reduce(
+      (sum, leg) => sum + (leg.distanceMeters || 0),
+      0
+    );
+
+    const legDetails = legs.map((leg) => ({
+      distance: leg.distanceMeters || 0,
+      time: leg.duration || '0s',
+    }));
+
+    setRouteInfo({
+      totalDistance,
+      totalTime: 0, // Calculate from duration strings
+      legs: legDetails,
+    });
+  };
+
+  return (
+    <>
+      <MapView style={{ flex: 1 }}>
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          waypoints={waypoints}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          legFields={['distanceMeters', 'duration']}
+          onLegs={handleLegs}
+        />
+      </MapView>
+
+      {routeInfo && (
+        <View style={{ position: 'absolute', top: 50, left: 20, backgroundColor: 'white', padding: 10 }}>
+          <Text>Total Distance: {(routeInfo.totalDistance / 1000).toFixed(1)} km</Text>
+          <Text>Segments: {routeInfo.legs.length}</Text>
+          {routeInfo.legs.map((leg, i) => (
+            <Text key={i}>
+              Leg {i + 1}: {(leg.distance / 1000).toFixed(1)} km
+            </Text>
+          ))}
+        </View>
+      )}
+    </>
+  );
+}
+```
+
+### Navigation instructions
+
+Access turn-by-turn navigation with `legStepFields`:
+
+```tsx
+import type { GoogleRouteLeg } from 'react-native-maps-routes';
+
+function NavigationInstructions() {
+  const [instructions, setInstructions] = useState<string[]>([]);
+
+  const handleLegs = (legs: GoogleRouteLeg[]) => {
+    const allInstructions: string[] = [];
+    
+    legs.forEach((leg) => {
+      leg.steps?.forEach((step) => {
+        if (step.navigationInstruction?.instructions) {
+          allInstructions.push(step.navigationInstruction.instructions);
+        }
+      });
+    });
+    
+    setInstructions(allInstructions);
+  };
+
+  return (
+    <>
+      <MapView style={{ flex: 1 }}>
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          legStepFields={['navigationInstruction', 'distanceMeters']}
+          onLegs={handleLegs}
+        />
+      </MapView>
+
+      <ScrollView style={{ maxHeight: 200, backgroundColor: 'white' }}>
+        {instructions.map((instruction, i) => (
+          <View key={i} style={{ padding: 10, borderBottomWidth: 1 }}>
+            <Text>{i + 1}. {instruction}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </>
+  );
+}
+```
+
+## Combining multiple callbacks
+
+Use multiple callbacks together for comprehensive route information:
+
+```tsx
+import { useState } from 'react';
+import type { LatLng } from 'react-native-maps';
+import type { GoogleRouteLeg } from 'react-native-maps-routes';
+
+function ComprehensiveRoute() {
+  const [routeData, setRouteData] = useState({
+    isLoaded: false,
+    pointCount: 0,
+    distance: 0,
+    estimatedTime: 0,
+    legCount: 0,
+  });
+
+  return (
+    <>
+      <MapView style={{ flex: 1 }}>
+        <MapViewRoute
+          origin={origin}
+          destination={destination}
+          waypoints={waypoints}
+          apiKey={GOOGLE_MAPS_APIKEY}
+          enableDistance={true}
+          enableEstimatedTime={true}
+          legFields={['distanceMeters', 'duration']}
+          onReady={(coordinates: LatLng[]) => {
+            setRouteData((prev) => ({
+              ...prev,
+              isLoaded: true,
+              pointCount: coordinates.length,
+            }));
+          }}
+          onDistance={(distance: number) => {
+            setRouteData((prev) => ({ ...prev, distance }));
+          }}
+          onEstimatedTime={(time: number) => {
+            setRouteData((prev) => ({ ...prev, estimatedTime: time }));
+          }}
+          onLegs={(legs: GoogleRouteLeg[]) => {
+            setRouteData((prev) => ({ ...prev, legCount: legs.length }));
+          }}
+          onError={(error) => {
+            console.error('Route error:', error);
+          }}
+        />
+      </MapView>
+
+      {routeData.isLoaded && (
+        <View style={{ position: 'absolute', top: 50, left: 20, backgroundColor: 'white', padding: 15, borderRadius: 8 }}>
+          <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Route Information</Text>
+          <Text>Distance: {(routeData.distance / 1000).toFixed(1)} km</Text>
+          <Text>ETA: {Math.round(routeData.estimatedTime / 1000 / 60)} min</Text>
+          <Text>Points: {routeData.pointCount}</Text>
+          <Text>Segments: {routeData.legCount}</Text>
+        </View>
+      )}
+    </>
+  );
+}
+```
+
+## Performance considerations
+
+<Tip>
+  - Only enable features you need (e.g., `enableDistance`, `enableEstimatedTime`)
+  - Request only the leg fields you'll use to minimize API response size
+  - Use `legFields` for segment summaries; use `legStepFields` only when you need turn-by-turn instructions
+  - Requesting more fields increases API response time and may affect costs
+</Tip>
+
+## Field mask and API costs
+
+The component automatically generates the optimal field mask based on your props:
+
+```tsx
+// Minimal field mask - lowest cost
+<MapViewRoute />
+
+// Includes distance and duration fields
+<MapViewRoute
+  enableDistance={true}
+  enableEstimatedTime={true}
+/>
+
+// Includes leg-level details
+<MapViewRoute
+  legFields={['distanceMeters', 'duration']}
+/>
+
+// Includes detailed step-by-step data - highest cost
+<MapViewRoute
+  legStepFields={['navigationInstruction', 'distanceMeters', 'polyline']}
+/>
+```
+
+<Note>
+  Each additional field in the field mask may increase the API call cost. See the [Google Maps Routes API pricing](https://developers.google.com/maps/documentation/routes/usage-and-billing) for details.
+</Note>

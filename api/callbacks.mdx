@@ -1,0 +1,826 @@
+---
+title: 'Callbacks'
+description: 'Event handlers and callback props for MapViewRoute'
+icon: 'bell'
+---
+
+## Overview
+
+The `MapViewRoute` component provides several callback props that are invoked at different points in the route lifecycle. Use these callbacks to respond to route data, handle errors, and implement custom navigation features.
+
+## Callbacks
+
+### onReady
+
+Called when the route has been successfully fetched from the Google Routes API and decoded into coordinates.
+
+<ParamField path="onReady" type="(coordinates: LatLng[]) => void">
+  Callback invoked when the route is ready to render.
+  
+  **Parameters:**
+  - `coordinates` - Array of decoded LatLng points that make up the route polyline
+  
+  **When it's called:**
+  - After successful API response
+  - After polyline decoding
+  - Before the polyline is rendered on the map
+  - Called again whenever route parameters change (origin, destination, mode, etc.)
+</ParamField>
+
+**Type Definition:**
+```typescript
+type LatLng = {
+  latitude: number;
+  longitude: number;
+};
+
+onReady?: (coordinates: LatLng[]) => void;
+```
+
+**Usage Example:**
+```typescript
+import React from 'react';
+import MapView, { Marker } from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { LatLng } from 'react-native-maps';
+
+export default function MapScreen() {
+  const [routeCoordinates, setRouteCoordinates] = React.useState<LatLng[]>([]);
+  
+  const handleRouteReady = (coordinates: LatLng[]) => {
+    console.log(`Route ready with ${coordinates.length} points`);
+    setRouteCoordinates(coordinates);
+    
+    // You could use this to:
+    // - Fit the map to show the entire route
+    // - Store coordinates for offline use
+    // - Calculate custom metrics
+    // - Show route waypoint markers
+  };
+
+  return (
+    <MapView style={{ flex: 1 }}>
+      <MapViewRoute
+        origin={{ latitude: 37.7749, longitude: -122.4194 }}
+        destination={{ latitude: 34.0522, longitude: -118.2437 }}
+        apiKey="YOUR_API_KEY"
+        onReady={handleRouteReady}
+      />
+      
+      {/* Example: Add markers at route midpoint */}
+      {routeCoordinates.length > 0 && (
+        <Marker 
+          coordinate={routeCoordinates[Math.floor(routeCoordinates.length / 2)]}
+          title="Midpoint"
+        />
+      )}
+    </MapView>
+  );
+}
+```
+
+### onError
+
+Called when an error occurs during route fetching or processing.
+
+<ParamField path="onError" type="(error: Error) => void">
+  Callback invoked when an error occurs.
+  
+  **Parameters:**
+  - `error` - Standard JavaScript Error object with message and stack trace
+  
+  **When it's called:**
+  - Network errors (no internet, timeout, etc.)
+  - API errors (invalid API key, quota exceeded, invalid parameters)
+  - Response parsing errors
+  - Any other errors during route fetching
+</ParamField>
+
+**Type Definition:**
+```typescript
+onError?: (error: Error) => void;
+```
+
+**Common Error Scenarios:**
+- Invalid or missing API key
+- Routes API not enabled in Google Cloud Console
+- API quota exceeded
+- Invalid coordinates
+- Network connectivity issues
+- Server errors from Google Routes API
+
+**Usage Example:**
+```typescript
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+export default function MapScreen() {
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleError = (error: Error) => {
+    console.error('Route error:', error.message);
+    setError(error.message);
+    setIsLoading(false);
+    
+    // You could:
+    // - Show error notification to user
+    // - Log to error tracking service (Sentry, etc.)
+    // - Retry with different parameters
+    // - Fall back to alternative routing method
+  };
+
+  const handleReady = () => {
+    setIsLoading(false);
+    setError(null);
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView style={styles.map}>
+        <MapViewRoute
+          origin={{ latitude: 37.7749, longitude: -122.4194 }}
+          destination={{ latitude: 34.0522, longitude: -118.2437 }}
+          apiKey="YOUR_API_KEY"
+          onReady={handleReady}
+          onError={handleError}
+        />
+      </MapView>
+      
+      {error && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>Error loading route: {error}</Text>
+        </View>
+      )}
+      
+      {isLoading && (
+        <View style={styles.loadingBanner}>
+          <Text>Loading route...</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { flex: 1 },
+  errorBanner: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: '#ff4444',
+    padding: 15,
+    borderRadius: 10,
+  },
+  errorText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  loadingBanner: {
+    position: 'absolute',
+    top: 50,
+    alignSelf: 'center',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+  },
+});
+```
+
+### onEstimatedTime
+
+Called with the estimated travel time for the route.
+
+<ParamField path="onEstimatedTime" type="(time: number) => void">
+  Callback invoked with estimated travel duration.
+  
+  **Parameters:**
+  - `time` - Estimated travel time in milliseconds
+  
+  **Requirements:**
+  - Must set `enableEstimatedTime={true}` prop
+  
+  **When it's called:**
+  - After successful route calculation
+  - Whenever the route changes
+</ParamField>
+
+**Type Definition:**
+```typescript
+onEstimatedTime?: (time: number) => void;
+```
+
+**Important Notes:**
+- Time is provided in milliseconds
+- Includes traffic conditions if available
+- Based on Google Routes API duration field
+- Must enable with `enableEstimatedTime={true}` prop
+
+**Usage Example:**
+```typescript
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+export default function MapScreen() {
+  const [estimatedTime, setEstimatedTime] = useState<number>(0);
+
+  const formatTime = (milliseconds: number) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes} min`;
+  };
+
+  const formatDetailedTime = (milliseconds: number) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView style={styles.map}>
+        <MapViewRoute
+          origin={{ latitude: 37.7749, longitude: -122.4194 }}
+          destination={{ latitude: 34.0522, longitude: -118.2437 }}
+          apiKey="YOUR_API_KEY"
+          mode="DRIVE"
+          enableEstimatedTime // Required!
+          onEstimatedTime={setEstimatedTime}
+        />
+      </MapView>
+      
+      <View style={styles.timePanel}>
+        <Text style={styles.timeLabel}>Estimated Time:</Text>
+        <Text style={styles.timeValue}>{formatTime(estimatedTime)}</Text>
+        <Text style={styles.timeDetail}>{formatDetailedTime(estimatedTime)}</Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { flex: 1 },
+  timePanel: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  timeLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  timeValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#0066FF',
+  },
+  timeDetail: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 5,
+  },
+});
+```
+
+### onDistance
+
+Called with the total distance of the route.
+
+<ParamField path="onDistance" type="(distance: number) => void">
+  Callback invoked with total route distance.
+  
+  **Parameters:**
+  - `distance` - Total route distance in meters
+  
+  **Requirements:**
+  - Must set `enableDistance={true}` prop
+  
+  **When it's called:**
+  - After successful route calculation
+  - Whenever the route changes
+</ParamField>
+
+**Type Definition:**
+```typescript
+onDistance?: (distance: number) => void;
+```
+
+**Important Notes:**
+- Distance is provided in meters
+- Represents actual route distance (not straight-line distance)
+- Based on Google Routes API distanceMeters field
+- Must enable with `enableDistance={true}` prop
+
+**Usage Example:**
+```typescript
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+
+export default function MapScreen() {
+  const [distance, setDistance] = useState<number>(0);
+
+  const formatDistance = (meters: number) => {
+    if (meters < 1000) {
+      return `${meters.toFixed(0)} m`;
+    }
+    const km = meters / 1000;
+    return `${km.toFixed(1)} km`;
+  };
+
+  const formatDistanceMiles = (meters: number) => {
+    const miles = meters * 0.000621371;
+    return `${miles.toFixed(1)} mi`;
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView style={styles.map}>
+        <MapViewRoute
+          origin={{ latitude: 37.7749, longitude: -122.4194 }}
+          destination={{ latitude: 34.0522, longitude: -118.2437 }}
+          apiKey="YOUR_API_KEY"
+          mode="DRIVE"
+          enableDistance // Required!
+          onDistance={setDistance}
+        />
+      </MapView>
+      
+      <View style={styles.distancePanel}>
+        <Text style={styles.label}>Distance:</Text>
+        <Text style={styles.value}>{formatDistance(distance)}</Text>
+        <Text style={styles.secondary}>({formatDistanceMiles(distance)})</Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { flex: 1 },
+  distancePanel: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  label: {
+    fontSize: 12,
+    color: '#666',
+  },
+  value: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#0066FF',
+  },
+  secondary: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 5,
+  },
+});
+```
+
+### onLegs
+
+Called with detailed information about route segments (legs) and turn-by-turn steps.
+
+<ParamField path="onLegs" type="(legs: GoogleRouteLeg[]) => void">
+  Callback invoked with detailed route leg and step data.
+  
+  **Parameters:**
+  - `legs` - Array of GoogleRouteLeg objects containing segment information
+  
+  **Requirements:**
+  - Must specify `legFields` and/or `legStepFields` props
+  
+  **When it's called:**
+  - After successful route calculation
+  - Only if legFields or legStepFields are specified
+  - Whenever the route changes
+</ParamField>
+
+**Type Definition:**
+```typescript
+type GoogleRouteLeg = {
+  distanceMeters?: number;
+  duration?: string;
+  staticDuration?: string;
+  startLocation?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  endLocation?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  steps?: GoogleRouteStep[];
+};
+
+type GoogleRouteStep = {
+  distanceMeters?: number;
+  staticDuration?: string;
+  polyline?: {
+    encodedPolyline: string;
+  };
+  startLocation?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  endLocation?: {
+    latLng: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  navigationInstruction?: {
+    maneuver?: string;
+    instructions?: string;
+  };
+};
+
+onLegs?: (legs: GoogleRouteLeg[]) => void;
+```
+
+**Important Notes:**
+- Legs represent segments between waypoints
+- Steps provide turn-by-turn navigation instructions
+- Fields included depend on `legFields` and `legStepFields` props
+- Duration strings are in format like "3600s" (seconds)
+- Only requested fields will be present in the response
+
+**Usage Example:**
+```typescript
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { GoogleRouteLeg, LegField, LegStepField } from 'react-native-maps-routes';
+
+export default function NavigationScreen() {
+  const [legs, setLegs] = useState<GoogleRouteLeg[]>([]);
+
+  const legFields: LegField[] = [
+    "distanceMeters",
+    "duration",
+    "startLocation",
+    "endLocation",
+  ];
+
+  const legStepFields: LegStepField[] = [
+    "navigationInstruction",
+    "distanceMeters",
+    "startLocation",
+    "endLocation",
+  ];
+
+  const formatDuration = (durationString?: string) => {
+    if (!durationString) return 'N/A';
+    const seconds = parseInt(durationString.replace('s', ''));
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes} min`;
+  };
+
+  const formatDistance = (meters?: number) => {
+    if (!meters) return 'N/A';
+    if (meters < 1000) return `${meters.toFixed(0)} m`;
+    return `${(meters / 1000).toFixed(1)} km`;
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView style={styles.map}>
+        <MapViewRoute
+          origin={{ latitude: 37.7749, longitude: -122.4194 }}
+          destination={{ latitude: 34.0522, longitude: -118.2437 }}
+          waypoints={[
+            { latitude: 36.7783, longitude: -119.4179 },
+          ]}
+          apiKey="YOUR_API_KEY"
+          mode="DRIVE"
+          legFields={legFields}
+          legStepFields={legStepFields}
+          onLegs={setLegs}
+        />
+      </MapView>
+      
+      <ScrollView style={styles.instructionsPanel}>
+        <Text style={styles.title}>Route Instructions</Text>
+        
+        {legs.map((leg, legIndex) => (
+          <View key={legIndex} style={styles.legContainer}>
+            <Text style={styles.legHeader}>
+              Leg {legIndex + 1} - {formatDistance(leg.distanceMeters)} ({formatDuration(leg.duration)})
+            </Text>
+            
+            {leg.steps?.map((step, stepIndex) => (
+              <View key={stepIndex} style={styles.stepContainer}>
+                <Text style={styles.stepNumber}>{stepIndex + 1}</Text>
+                <View style={styles.stepContent}>
+                  <Text style={styles.stepInstruction}>
+                    {step.navigationInstruction?.instructions || 'Continue'}
+                  </Text>
+                  <Text style={styles.stepDistance}>
+                    {formatDistance(step.distanceMeters)}
+                  </Text>
+                  {step.navigationInstruction?.maneuver && (
+                    <Text style={styles.stepManeuver}>
+                      Maneuver: {step.navigationInstruction.maneuver}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  instructionsPanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    maxHeight: '40%',
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  legContainer: {
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: '#e0e0e0',
+  },
+  legHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0066FF',
+    marginBottom: 10,
+  },
+  stepContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    paddingLeft: 10,
+  },
+  stepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#0066FF',
+    color: 'white',
+    textAlign: 'center',
+    lineHeight: 24,
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+  stepContent: {
+    flex: 1,
+  },
+  stepInstruction: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  stepDistance: {
+    fontSize: 12,
+    color: '#666',
+  },
+  stepManeuver: {
+    fontSize: 11,
+    color: '#999',
+    fontStyle: 'italic',
+  },
+});
+```
+
+## Complete Example with All Callbacks
+
+```typescript
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
+import MapView from 'react-native-maps';
+import { MapViewRoute } from 'react-native-maps-routes';
+import type { LatLng } from 'react-native-maps';
+import type { GoogleRouteLeg } from 'react-native-maps-routes';
+
+export default function CompleteRouteExample() {
+  const [coordinates, setCoordinates] = useState<LatLng[]>([]);
+  const [estimatedTime, setEstimatedTime] = useState<number>(0);
+  const [distance, setDistance] = useState<number>(0);
+  const [legs, setLegs] = useState<GoogleRouteLeg[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleReady = (coords: LatLng[]) => {
+    console.log('Route ready with', coords.length, 'coordinate points');
+    setCoordinates(coords);
+    setError(null);
+  };
+
+  const handleError = (err: Error) => {
+    console.error('Route error:', err);
+    setError(err.message);
+    Alert.alert('Route Error', err.message);
+  };
+
+  const handleEstimatedTime = (time: number) => {
+    console.log('Estimated time:', time, 'ms');
+    setEstimatedTime(time);
+  };
+
+  const handleDistance = (dist: number) => {
+    console.log('Distance:', dist, 'meters');
+    setDistance(dist);
+  };
+
+  const handleLegs = (routeLegs: GoogleRouteLeg[]) => {
+    console.log('Received', routeLegs.length, 'legs');
+    setLegs(routeLegs);
+    
+    routeLegs.forEach((leg, index) => {
+      console.log(`Leg ${index + 1}:`, {
+        distance: leg.distanceMeters,
+        duration: leg.duration,
+        steps: leg.steps?.length,
+      });
+    });
+  };
+
+  const formatTime = (ms: number) => {
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes} min`;
+  };
+
+  const formatDistance = (meters: number) => {
+    return meters < 1000 
+      ? `${meters.toFixed(0)} m`
+      : `${(meters / 1000).toFixed(1)} km`;
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: 37.7749,
+          longitude: -122.4194,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
+        }}
+      >
+        <MapViewRoute
+          origin={{ latitude: 37.7749, longitude: -122.4194 }}
+          destination={{ latitude: 37.8044, longitude: -122.2712 }}
+          apiKey="YOUR_GOOGLE_MAPS_API_KEY"
+          mode="DRIVE"
+          strokeColor="#0066FF"
+          strokeWidth={4}
+          enableEstimatedTime
+          enableDistance
+          legFields={["distanceMeters", "duration"]}
+          legStepFields={["navigationInstruction", "distanceMeters"]}
+          onReady={handleReady}
+          onError={handleError}
+          onEstimatedTime={handleEstimatedTime}
+          onDistance={handleDistance}
+          onLegs={handleLegs}
+        />
+      </MapView>
+      
+      <View style={styles.statsPanel}>
+        {error ? (
+          <Text style={styles.errorText}>Error: {error}</Text>
+        ) : (
+          <>
+            <View style={styles.stat}>
+              <Text style={styles.statLabel}>Time</Text>
+              <Text style={styles.statValue}>{formatTime(estimatedTime)}</Text>
+            </View>
+            
+            <View style={styles.stat}>
+              <Text style={styles.statLabel}>Distance</Text>
+              <Text style={styles.statValue}>{formatDistance(distance)}</Text>
+            </View>
+            
+            <View style={styles.stat}>
+              <Text style={styles.statLabel}>Points</Text>
+              <Text style={styles.statValue}>{coordinates.length}</Text>
+            </View>
+            
+            <View style={styles.stat}>
+              <Text style={styles.statLabel}>Segments</Text>
+              <Text style={styles.statValue}>{legs.length}</Text>
+            </View>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  statsPanel: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0066FF',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+  },
+});
+```
+
+## See Also
+
+- [MapViewRoute Component](/api/mapviewroute) - Component overview
+- [Props Reference](/api/props) - Complete props documentation
+- [Types Reference](/api/types) - TypeScript type definitions including GoogleRouteLeg and GoogleRouteStep
